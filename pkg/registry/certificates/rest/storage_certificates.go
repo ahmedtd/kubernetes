@@ -18,6 +18,7 @@ package rest
 
 import (
 	certificatesapiv1 "k8s.io/api/certificates/v1"
+	certificatesapiv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -25,6 +26,7 @@ import (
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	"k8s.io/kubernetes/pkg/apis/certificates"
 	certificatestore "k8s.io/kubernetes/pkg/registry/certificates/certificates/storage"
+	clustertrustbundlestore "k8s.io/kubernetes/pkg/registry/certificates/clustertrustbundle/storage"
 )
 
 type RESTStorageProvider struct{}
@@ -40,13 +42,18 @@ func (p RESTStorageProvider) NewRESTStorage(apiResourceConfigSource serverstorag
 		apiGroupInfo.VersionedResourcesStorageMap[certificatesapiv1.SchemeGroupVersion.Version] = storageMap
 	}
 
+	if storageMap, err := p.v1alpha1Storage(apiResourceConfigSource, restOptionsGetter); err != nil {
+		return genericapiserver.APIGroupInfo{}, err
+	} else if len(storageMap) > 0 {
+		apiGroupInfo.VersionedResourcesStorageMap[certificatesapiv1alpha1.SchemeGroupVersion.Version] = storageMap
+	}
+
 	return apiGroupInfo, nil
 }
 
 func (p RESTStorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (map[string]rest.Storage, error) {
 	storage := map[string]rest.Storage{}
 
-	// certificatesigningrequests
 	if resource := "certificatesigningrequests"; apiResourceConfigSource.ResourceEnabled(certificatesapiv1.SchemeGroupVersion.WithResource(resource)) {
 		csrStorage, csrStatusStorage, csrApprovalStorage, err := certificatestore.NewREST(restOptionsGetter)
 		if err != nil {
@@ -55,6 +62,20 @@ func (p RESTStorageProvider) v1Storage(apiResourceConfigSource serverstorage.API
 		storage[resource] = csrStorage
 		storage[resource+"/status"] = csrStatusStorage
 		storage[resource+"/approval"] = csrApprovalStorage
+	}
+
+	return storage, nil
+}
+
+func (p RESTStorageProvider) v1alpha1Storage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (map[string]rest.Storage, error) {
+	storage := map[string]rest.Storage{}
+
+	if apiResourceConfigSource.ResourceEnabled(certificatesapiv1alpha1.SchemeGroupVersion.WithResource("clustertrustbundles")) {
+		bundleStorage, err := clustertrustbundlestore.NewREST(restOptionsGetter)
+		if err != nil {
+			return storage, err
+		}
+		storage["clustertrustbundles"] = bundleStorage
 	}
 
 	return storage, nil

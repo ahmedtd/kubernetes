@@ -197,7 +197,7 @@ func validateCertificateSigningRequest(csr *certificates.CertificateSigningReque
 	if !opts.allowLegacySignerName && csr.Spec.SignerName == certificates.LegacyUnknownSignerName {
 		allErrs = append(allErrs, field.Invalid(specPath.Child("signerName"), csr.Spec.SignerName, "the legacy signerName is not allowed via this API version"))
 	} else {
-		allErrs = append(allErrs, ValidateCertificateSigningRequestSignerName(specPath.Child("signerName"), csr.Spec.SignerName)...)
+		allErrs = append(allErrs, ValidateSignerName(specPath.Child("signerName"), csr.Spec.SignerName)...)
 	}
 	if csr.Spec.ExpirationSeconds != nil && *csr.Spec.ExpirationSeconds < 600 {
 		allErrs = append(allErrs, field.Invalid(specPath.Child("expirationSeconds"), *csr.Spec.ExpirationSeconds, "may not specify a duration less than 600 seconds (10 minutes)"))
@@ -272,7 +272,7 @@ func validateConditions(fldPath *field.Path, csr *certificates.CertificateSignin
 // The max length of a namespace name is 63 characters (DNS1123Label max length)
 // The max length of a resource name is 253 characters (DNS1123Subdomain max length)
 // We then add an additional 2 characters to account for the one '.' and one '/'.
-func ValidateCertificateSigningRequestSignerName(fldPath *field.Path, signerName string) field.ErrorList {
+func ValidateSignerName(fldPath *field.Path, signerName string) field.ErrorList {
 	var el field.ErrorList
 	if len(signerName) == 0 {
 		el = append(el, field.Required(fldPath, "signerName must be provided"))

@@ -27,6 +27,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	"k8s.io/kubernetes/pkg/apis/apps"
+	"k8s.io/kubernetes/pkg/apis/certificates"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	"k8s.io/kubernetes/pkg/apis/events"
 	"k8s.io/kubernetes/pkg/apis/extensions"
@@ -70,6 +71,7 @@ func NewStorageFactoryConfig() *StorageFactoryConfig {
 		// TODO (https://github.com/kubernetes/kubernetes/issues/108451): remove the override in 1.25.
 		// apisstorage.Resource("csistoragecapacities").WithVersion("v1beta1"),
 		networking.Resource("clustercidrs").WithVersion("v1alpha1"),
+		certificates.Resource("clustertrustbundles").WithVersion("v1alpha1"),
 	}
 
 	return &StorageFactoryConfig{

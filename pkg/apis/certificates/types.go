@@ -222,3 +222,54 @@ const (
 	UsageMicrosoftSGC      KeyUsage = "microsoft sgc"
 	UsageNetscapeSGC       KeyUsage = "netscape sgc"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterTrustBundle is a cluster-scoped container for X.509 trust anchors
+// (root certificates).
+//
+// ClusterTrustBundle objects are considered to be readable by any authenticated
+// user in the cluster.
+//
+// It can be optionally associated with a particular assigner, in which case it
+// contains one valid set of trust anchors for that signer. Signers may have
+// multiple associated ClusterTrustBundles; each is an independent set of trust
+// anchors for that signer. Admission control is used to enforce that only
+// users with permissions on the signer can create or modify the corresponding.
+type ClusterTrustBundle struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec contains the signer (if any) and trust anchors.
+	// +optional
+	Spec ClusterTrustBundleSpec
+}
+
+// ClusterTrustBundleSpec contains the signer and trust anchors.
+type ClusterTrustBundleSpec struct {
+	// SignerName indicates the associated signer, if any.
+	//
+	// In order to create or update a ClusterTrustBundle that sets signerName,
+	// you must have the following permission: group=certificates.k8s.io
+	// resource=signers resourceName=<the signer name> verb=entrust.
+	SignerName string
+
+	// PEMTrustAnchors contains the individual X.509 trust anchors for this
+	// bundle, as PEM bundle of PEM-wrapped, DER-formatted X.509 certificates.
+	//
+	// The order of certificates within the bundle has no meaning.
+	PEMTrustAnchors string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterTrustBundleList is a collection of ClusterTrustBundle objects
+type ClusterTrustBundleList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// Items is a collection of ClusterTrustBundle objects
+	Items []ClusterTrustBundle
+}

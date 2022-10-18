@@ -150,6 +150,9 @@ func NodeRules() []rbacv1.PolicyRule {
 		// for it to be signed. This allows the kubelet to rotate it's own certificate.
 		rbacv1helpers.NewRule("create", "get", "list", "watch").Groups(certificatesGroup).Resources("certificatesigningrequests").RuleOrDie(),
 
+		// Needed for ClusterTrustBundle / pemTrustAnchors projected volumes.
+		rbacv1helpers.NewRule("get", "list", "watch").Groups(certificatesGroup).Resources("clustertrustbundles").RuleOrDie(),
+
 		// Leases
 		rbacv1helpers.NewRule("get", "create", "update", "patch", "delete").Groups("coordination.k8s.io").Resources("leases").RuleOrDie(),
 

@@ -181,6 +181,13 @@ func GetEtcdStorageDataForNamespace(namespace string) map[schema.GroupVersionRes
 		},
 		// --
 
+		// k8s.io/kubernetes/pkg/apis/certificates/v1alpha1
+		gvr("certificates.k8s.io", "v1alpha1", "clustertrustbundles"): {
+			Stub:             `{"metadata": {"name": "ctb1"}, "spec": {"signerName":"example.com/signer", pemTrustAnchors: "-----BEGIN CERTIFICATE-----\nMIIC/jCCAeagAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl\ncm5ldGVzMB4XDTIyMTAxOTIzMTY0MFoXDTMyMTAxNjIzMTY0MFowFTETMBEGA1UE\nAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO+k\nzbj35jHIjCd5mxP1FHMwMtvLFPeKUjtaLDP9Bs2jZ97Igmr7NTysn9QZkRP68/XX\nj993Y8tOLg71N4vRggWiYP+T9Xfo0uHZJmzADKx5XkuC4Gqv79dUdb8IKfAbX9HB\nffGmWRnZLLTu8Bv/vfyl0CfE64a57DK+CzNJDwdK46CYYUnEH6Wb9finYrMQ+PLG\nOi2c0J4KAYc1WTId5npNwouzf/IMD33PvuXfE7r+/pDbP8u/X03e7U0cc9l7KRxr\n3gpRQemCG74yRuy1dd3lJ1YCD8q96xVVZimGebnJ0IHi+lORRa2ix/o3OzW3FaP+\n6kzHU6VnBRDr2rAhMh0CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB\n/wQFMAMBAf8wHQYDVR0OBBYEFGUVOLM74t1TVoZjifsLl3Rwt1A6MBUGA1UdEQQO\nMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBANHnPVDemZqRybYPN1as\nYwxi3iT1I3Wma1rZyxTWeIq8Ik0gnyvbtCD1cFB/5QU1xPW09YnmIFM/E73RIeWT\nRmCNMgOGmegYxBQRe4UvmwWGJzKNA66c0MBmd2LDHrQlrvdewOCR667Sm9krsGt1\ntS/t6N/uBXeRSkXKEDXa+jOpYrV3Oq3IntG6zUeCrVbrH2Bs9Ma5fU00TwK3ylw5\nWw8KzYdQaxxrLaiRRtFcpM9dFH/vwxl1QUa5vjHcmUjxmZunEmXKplATyLT0FXDw\nJAo8AuwuuwRh2o+o8SxwzzA+/EBrIREgcv5uIkD352QnfGkEvGu6JOPGZVyd/kVg\nKA0=\n-----END CERTIFICATE-----\n"}}`,
+			ExpectedEtcdPath: "/registry/clustertrustbundles/ctb1",
+		},
+		// --
+
 		// k8s.io/kubernetes/pkg/apis/coordination/v1
 		gvr("coordination.k8s.io", "v1", "leases"): {
 			Stub:             `{"metadata": {"name": "leasev1"}, "spec": {"holderIdentity": "holder", "leaseDurationSeconds": 5}}`,

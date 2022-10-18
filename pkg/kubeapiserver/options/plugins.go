@@ -26,6 +26,7 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/admission/antiaffinity"
 	certapproval "k8s.io/kubernetes/plugin/pkg/admission/certificates/approval"
 	certsigning "k8s.io/kubernetes/plugin/pkg/admission/certificates/signing"
+	certentrusting "k8s.io/kubernetes/plugin/pkg/admission/certificates/entrusting"
 	certsubjectrestriction "k8s.io/kubernetes/plugin/pkg/admission/certificates/subjectrestriction"
 	"k8s.io/kubernetes/plugin/pkg/admission/defaulttolerationseconds"
 	"k8s.io/kubernetes/plugin/pkg/admission/deny"
@@ -89,6 +90,7 @@ var AllOrderedPlugins = []string{
 	runtimeclass.PluginName,                 // RuntimeClass
 	certapproval.PluginName,                 // CertificateApproval
 	certsigning.PluginName,                  // CertificateSigning
+	certentrusting.PluginName,               // ClusterTrustBundleEntrusting
 	certsubjectrestriction.PluginName,       // CertificateSubjectRestriction
 	defaultingressclass.PluginName,          // DefaultIngressClass
 	denyserviceexternalips.PluginName,       // DenyServiceExternalIPs
@@ -135,6 +137,7 @@ func RegisterAllAdmissionPlugins(plugins *admission.Plugins) {
 	storageobjectinuseprotection.Register(plugins)
 	certapproval.Register(plugins)
 	certsigning.Register(plugins)
+	certentrusting.Register(plugins)
 	certsubjectrestriction.Register(plugins)
 }
 
@@ -156,6 +159,7 @@ func DefaultOffAdmissionPlugins() sets.String {
 		runtimeclass.PluginName,                 // RuntimeClass
 		certapproval.PluginName,                 // CertificateApproval
 		certsigning.PluginName,                  // CertificateSigning
+		certentrusting.PluginName,               // ClusterTrustBundleEntrusting
 		certsubjectrestriction.PluginName,       // CertificateSubjectRestriction
 		defaultingressclass.PluginName,          // DefaultIngressClass
 		podsecurity.PluginName,                  // PodSecurity
