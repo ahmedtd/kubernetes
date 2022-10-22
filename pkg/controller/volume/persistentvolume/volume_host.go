@@ -25,6 +25,7 @@ import (
 	utilexec "k8s.io/utils/exec"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
@@ -124,6 +125,12 @@ func (ctrl *PersistentVolumeController) GetServiceAccountTokenFunc() func(_, _ s
 func (ctrl *PersistentVolumeController) DeleteServiceAccountTokenFunc() func(types.UID) {
 	return func(types.UID) {
 		klog.Errorf("DeleteServiceAccountToken unsupported in PersistentVolumeController")
+	}
+}
+
+func (ctrl *PersistentVolumeController) GetClusterTrustBundleFunc() func(_ string) (*certificatesv1alpha1.ClusterTrustBundle, error) {
+	return func(_ string) (*certificatesv1alpha1.ClusterTrustBundle, error) {
+		return nil, fmt.Errorf("GetClusterTrustBundleFunc unsupported in PersistentVolumeController")
 	}
 }
 

@@ -26,6 +26,7 @@ import (
 	utilexec "k8s.io/utils/exec"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -35,6 +36,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
+	"k8s.io/kubernetes/pkg/kubelet/clustertrustbundle"
 	"k8s.io/kubernetes/pkg/kubelet/configmap"
 	"k8s.io/kubernetes/pkg/kubelet/secret"
 	"k8s.io/kubernetes/pkg/kubelet/token"
@@ -56,6 +58,7 @@ func NewInitializedVolumePluginMgr(
 	secretManager secret.Manager,
 	configMapManager configmap.Manager,
 	tokenManager *token.Manager,
+	clusterTrustBundleManager clustertrustbundle.Manager,
 	plugins []volume.VolumePlugin,
 	prober volume.DynamicPluginProber) (*volume.VolumePluginMgr, error) {
 
@@ -76,15 +79,16 @@ func NewInitializedVolumePluginMgr(
 	}
 
 	kvh := &kubeletVolumeHost{
-		kubelet:          kubelet,
-		volumePluginMgr:  volume.VolumePluginMgr{},
-		secretManager:    secretManager,
-		configMapManager: configMapManager,
-		tokenManager:     tokenManager,
-		informerFactory:  informerFactory,
-		csiDriverLister:  csiDriverLister,
-		csiDriversSynced: csiDriversSynced,
-		exec:             utilexec.New(),
+		kubelet:                   kubelet,
+		volumePluginMgr:           volume.VolumePluginMgr{},
+		secretManager:             secretManager,
+		configMapManager:          configMapManager,
+		tokenManager:              tokenManager,
+		clusterTrustBundleManager: clusterTrustBundleManager,
+		informerFactory:           informerFactory,
+		csiDriverLister:           csiDriverLister,
+		csiDriversSynced:          csiDriversSynced,
+		exec:                      utilexec.New(),
 	}
 
 	if err := kvh.volumePluginMgr.InitPlugins(plugins, prober, kvh); err != nil {
@@ -105,15 +109,16 @@ func (kvh *kubeletVolumeHost) GetPluginDir(pluginName string) string {
 }
 
 type kubeletVolumeHost struct {
-	kubelet          *Kubelet
-	volumePluginMgr  volume.VolumePluginMgr
-	secretManager    secret.Manager
-	tokenManager     *token.Manager
-	configMapManager configmap.Manager
-	informerFactory  informers.SharedInformerFactory
-	csiDriverLister  storagelisters.CSIDriverLister
-	csiDriversSynced cache.InformerSynced
-	exec             utilexec.Interface
+	kubelet                   *Kubelet
+	volumePluginMgr           volume.VolumePluginMgr
+	secretManager             secret.Manager
+	tokenManager              *token.Manager
+	configMapManager          configmap.Manager
+	clusterTrustBundleManager clustertrustbundle.Manager
+	informerFactory           informers.SharedInformerFactory
+	csiDriverLister           storagelisters.CSIDriverLister
+	csiDriversSynced          cache.InformerSynced
+	exec                      utilexec.Interface
 }
 
 func (kvh *kubeletVolumeHost) SetKubeletError(err error) {
@@ -270,6 +275,10 @@ func (kvh *kubeletVolumeHost) GetServiceAccountTokenFunc() func(namespace, name 
 
 func (kvh *kubeletVolumeHost) DeleteServiceAccountTokenFunc() func(podUID types.UID) {
 	return kvh.tokenManager.DeleteServiceAccountToken
+}
+
+func (kvh *kubeletVolumeHost) GetClusterTrustBundleFunc() func(name string) (*certificatesv1alpha1.ClusterTrustBundle, error) {
+	return kvh.clusterTrustBundleManager.GetClusterTrustBundle
 }
 
 func (kvh *kubeletVolumeHost) GetNodeLabels() (map[string]string, error) {

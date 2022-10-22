@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,6 +50,7 @@ type projectedPlugin struct {
 	getConfigMap              func(namespace, name string) (*v1.ConfigMap, error)
 	getServiceAccountToken    func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
 	deleteServiceAccountToken func(podUID types.UID)
+	getClusterTrustBundle     func(name string) (*certificatesv1alpha1.ClusterTrustBundle, error)
 }
 
 var _ volume.VolumePlugin = &projectedPlugin{}
@@ -73,6 +75,7 @@ func (plugin *projectedPlugin) Init(host volume.VolumeHost) error {
 	plugin.getConfigMap = host.GetConfigMapFunc()
 	plugin.getServiceAccountToken = host.GetServiceAccountTokenFunc()
 	plugin.deleteServiceAccountToken = host.DeleteServiceAccountTokenFunc()
+	plugin.getClusterTrustBundle = host.GetClusterTrustBundleFunc()
 	return nil
 }
 
@@ -349,6 +352,18 @@ func (s *projectedVolumeMounter) collectData(mounterArgs volume.MounterArgs) (ma
 			payload[tp.Path] = volumeutil.FileProjection{
 				Data:   []byte(tr.Status.Token),
 				Mode:   mode,
+				FsUser: mounterArgs.FsUser,
+			}
+		case source.ClusterTrustBundlePEM != nil:
+			bundle, err := s.plugin.getClusterTrustBundle(source.ClusterTrustBundlePEM.Name)
+			if err != nil {
+				errlist = append(errlist, err)
+				continue
+			}
+
+			payload[source.ClusterTrustBundlePEM.Path] = volumeutil.FileProjection{
+				Data:   []byte(bundle.Spec.PEMTrustAnchors),
+				Mode:   *s.source.DefaultMode,
 				FsUser: mounterArgs.FsUser,
 			}
 		}

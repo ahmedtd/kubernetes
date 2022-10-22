@@ -28,6 +28,7 @@ import (
 	"k8s.io/utils/exec"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -433,6 +434,9 @@ type VolumeHost interface {
 	GetServiceAccountTokenFunc() func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
 
 	DeleteServiceAccountTokenFunc() func(podUID types.UID)
+
+	// Returns a function that returns a ClusterTrustBundle.
+	GetClusterTrustBundleFunc() func(name string) (*certificatesv1alpha1.ClusterTrustBundle, error)
 
 	// Returns an interface that should be used to execute any utilities in volume plugins
 	GetExec(pluginName string) exec.Interface

@@ -27,6 +27,7 @@ import (
 	utilexec "k8s.io/utils/exec"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -471,6 +472,12 @@ func (expc *expandController) GetServiceAccountTokenFunc() func(_, _ string, _ *
 func (expc *expandController) DeleteServiceAccountTokenFunc() func(types.UID) {
 	return func(types.UID) {
 		klog.Errorf("DeleteServiceAccountToken unsupported in expandController")
+	}
+}
+
+func (expc *expandController) GetClusterTrustBundleFunc() func(_ string) (*certificatesv1alpha1.ClusterTrustBundle, error) {
+	return func(_ string) (*certificatesv1alpha1.ClusterTrustBundle, error) {
+		return nil, fmt.Errorf("GetClusterTrustBundleFunc unsupported in expandController")
 	}
 }
 
