@@ -469,6 +469,18 @@ func (expc *expandController) DeleteServiceAccountTokenFunc() func(types.UID) {
 	}
 }
 
+func (expc *expandController) GetTrustAnchorsByNameFunc() func(_ string) (string, error) {
+	return func(_ string) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsByNameFunc unsupported in expandController")
+	}
+}
+
+func (expc *expandController) GetTrustAnchorsBySignerFunc() func(_ string, _ metav1.LabelSelector) (string, error) {
+	return func(_ string, _ metav1.LabelSelector) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsBySignerFunc unsupported in expandController")
+	}
+}
+
 func (expc *expandController) GetNodeLabels() (map[string]string, error) {
 	return nil, fmt.Errorf("GetNodeLabels unsupported in expandController")
 }

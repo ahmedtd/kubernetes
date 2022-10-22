@@ -31,6 +31,7 @@ import (
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -881,6 +882,18 @@ func (adc *attachDetachController) GetServiceAccountTokenFunc() func(_, _ string
 func (adc *attachDetachController) DeleteServiceAccountTokenFunc() func(types.UID) {
 	return func(types.UID) {
 		klog.ErrorS(nil, "DeleteServiceAccountToken unsupported in attachDetachController")
+	}
+}
+
+func (adc *attachDetachController) GetTrustAnchorsByNameFunc() func(_ string) (string, error) {
+	return func(_ string) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsByNameFunc unsupported in attachDetachController")
+	}
+}
+
+func (adc *attachDetachController) GetTrustAnchorsBySignerFunc() func(_ string, _ metav1.LabelSelector) (string, error) {
+	return func(_ string, _ metav1.LabelSelector) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsBySignerFunc unsupported in attachDetachController")
 	}
 }
 

@@ -427,6 +427,12 @@ type VolumeHost interface {
 
 	DeleteServiceAccountTokenFunc() func(podUID types.UID)
 
+	// Returns a function that returns trust anchors.
+	GetTrustAnchorsByNameFunc() func(name string) (string, error)
+
+	// Returns a function that returns trust anchors.
+	GetTrustAnchorsBySignerFunc() func(signerName string, labelSelector metav1.LabelSelector) (string, error)
+
 	// Returns an interface that should be used to execute any utilities in volume plugins
 	GetExec(pluginName string) exec.Interface
 

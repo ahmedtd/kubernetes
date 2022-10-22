@@ -49,6 +49,8 @@ type projectedPlugin struct {
 	getConfigMap              func(namespace, name string) (*v1.ConfigMap, error)
 	getServiceAccountToken    func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
 	deleteServiceAccountToken func(podUID types.UID)
+	getTrustAnchorsByName     func(name string) (string, error)
+	getTrustAnchorsBySigner   func(signerName string, labelSelector metav1.LabelSelector) (string, error)
 }
 
 var _ volume.VolumePlugin = &projectedPlugin{}
@@ -73,6 +75,8 @@ func (plugin *projectedPlugin) Init(host volume.VolumeHost) error {
 	plugin.getConfigMap = host.GetConfigMapFunc()
 	plugin.getServiceAccountToken = host.GetServiceAccountTokenFunc()
 	plugin.deleteServiceAccountToken = host.DeleteServiceAccountTokenFunc()
+	plugin.getTrustAnchorsByName = host.GetTrustAnchorsByNameFunc()
+	plugin.getTrustAnchorsBySigner = host.GetTrustAnchorsBySignerFunc()
 	return nil
 }
 
@@ -351,6 +355,32 @@ func (s *projectedVolumeMounter) collectData(mounterArgs volume.MounterArgs) (ma
 			payload[tp.Path] = volumeutil.FileProjection{
 				Data:   []byte(tr.Status.Token),
 				Mode:   mode,
+				FsUser: mounterArgs.FsUser,
+			}
+		case source.ClusterTrustBundle != nil:
+			var trustAnchors string
+			if source.ClusterTrustBundle.Name != nil {
+				var err error
+				trustAnchors, err = s.plugin.getTrustAnchorsByName(*source.ClusterTrustBundle.Name)
+				if err != nil {
+					errlist = append(errlist, err)
+					continue
+				}
+			} else if source.ClusterTrustBundle.SignerName != nil && source.ClusterTrustBundle.LabelSelector != nil {
+				var err error
+				trustAnchors, err = s.plugin.getTrustAnchorsBySigner(*source.ClusterTrustBundle.SignerName, *source.ClusterTrustBundle.LabelSelector)
+				if err != nil {
+					errlist = append(errlist, err)
+					continue
+				}
+			} else {
+				errlist = append(errlist, fmt.Errorf("ClusterTrustBundle projection requires either (Name) or (SignerName, LabelSelector) to be set"))
+				continue
+			}
+
+			payload[source.ClusterTrustBundle.Path] = volumeutil.FileProjection{
+				Data:   []byte(trustAnchors),
+				Mode:   *s.source.DefaultMode,
 				FsUser: mounterArgs.FsUser,
 			}
 		}

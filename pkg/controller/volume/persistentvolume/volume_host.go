@@ -26,6 +26,7 @@ import (
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
@@ -120,6 +121,18 @@ func (ctrl *PersistentVolumeController) GetServiceAccountTokenFunc() func(_, _ s
 func (ctrl *PersistentVolumeController) DeleteServiceAccountTokenFunc() func(types.UID) {
 	return func(types.UID) {
 		klog.ErrorS(nil, "DeleteServiceAccountToken unsupported in PersistentVolumeController")
+	}
+}
+
+func (ctrl *PersistentVolumeController) GetTrustAnchorsByNameFunc() func(_ string) (string, error) {
+	return func(_ string) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsByNameFunc unsupported in PersistentVolumeController")
+	}
+}
+
+func (ctrl *PersistentVolumeController) GetTrustAnchorsBySignerFunc() func(_ string, _ metav1.LabelSelector) (string, error) {
+	return func(_ string, _ metav1.LabelSelector) (string, error) {
+		return "", fmt.Errorf("GetTrustAnchorsBySignerFunc unsupported in PersistentVolumeController")
 	}
 }
 

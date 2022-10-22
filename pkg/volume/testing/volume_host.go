@@ -229,6 +229,14 @@ func (f *fakeVolumeHost) DeleteServiceAccountTokenFunc() func(types.UID) {
 	return func(types.UID) {}
 }
 
+func (f *fakeVolumeHost) GetTrustAnchorsByNameFunc() func(name string) (string, error) {
+	return func(name string) (string, error) {}
+}
+
+func (kvh *fakeVolumeHost) GetTrustAnchorsBySignerFunc() func(signerName string, labelSelector metav1.LabelSelector) (string, error) {
+	return func(signerName string, labelSelector metav1.LabelSelector) (string, error) {}
+}
+
 func (f *fakeVolumeHost) GetNodeLabels() (map[string]string, error) {
 	if f.nodeLabels == nil {
 		f.nodeLabels = map[string]string{"test-label": "test-value"}
