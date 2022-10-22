@@ -36,7 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	unversionedvalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	metavalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -1153,6 +1153,58 @@ func validateProjectionSources(projection *core.ProjectedVolumeSource, projectio
 				allErrs = append(allErrs, field.Required(fldPath.Child("path"), ""))
 			}
 		}
+		if projPath := srcPath.Child("clusterTrustBundlePEM"); source.ClusterTrustBundle != nil {
+			numSources++
+
+			usingName := source.ClusterTrustBundle.Name != nil
+			usingSignerName := source.ClusterTrustBundle.SignerName != nil
+
+			// At least one of Name or SignerName must be specified.
+			if !usingName && !usingSignerName {
+				allErrs = append(allErrs, field.Required(projPath, "either name or signerName must be specified"))
+			} else if !usingName && usingSignerName {
+				if *source.ClusterTrustBundle.SignerName == "" {
+					allErrs = append(allErrs, field.Required(projPath.Child("signerName"), "must be a valid signer name"))
+				}
+
+				// TODO(KEP-3257): This validation call causes an import loop.
+				// allErrs = append(allErrs, certvalidation.ValidateSignerName(projPath.Child("signerName"), source.ClusterTrustBundle.SignerName))
+
+				if source.ClusterTrustBundle.LabelSelector == nil {
+					allErrs = append(allErrs, field.Required(projPath.Child("labelSelector"), "a label selector is required"))
+				}
+				if len(source.ClusterTrustBundle.LabelSelector.MatchExpressions) == 0 && len(source.ClusterTrustBundle.LabelSelector.MatchLabels) == 0 {
+					allErrs = append(allErrs, field.Required(projPath.Child("labelSelector"), "the label selector must be non-empty"))
+				}
+
+				labelSelectorErrs := metavalidation.ValidateLabelSelector(
+					source.ClusterTrustBundle.LabelSelector,
+					metavalidation.LabelSelectorValidationOptions{AllowInvalidLabelValueInSelector: false},
+					projPath.Child("labelSelector"),
+				)
+				allErrs = append(allErrs, labelSelectorErrs...)
+			} else if usingName && !usingSignerName {
+				if *source.ClusterTrustBundle.Name == "" {
+					allErrs = append(allErrs, field.Required(projPath.Child("name"), "must be a valid object name"))
+				}
+
+				// TODO(KEP-3257): Check that Name could plausibly refer to a
+				// non-signername ClusterTrustBundle.
+			} else if usingName && usingSignerName {
+				allErrs = append(allErrs, field.Invalid(projPath, source.ClusterTrustBundle, "only one of name and signerName may be used"))
+			}
+
+			if source.ClusterTrustBundle.Path == "" {
+				allErrs = append(allErrs, field.Required(projPath.Child("path"), ""))
+			}
+
+			curPath := source.ClusterTrustBundle.Path
+			if !allPaths.Has(curPath) {
+				allPaths.Insert(curPath)
+			} else {
+				allErrs = append(allErrs, field.Invalid(fldPath, curPath, "conflicting duplicate paths"))
+			}
+		}
 		if numSources > 1 {
 			allErrs = append(allErrs, field.Forbidden(srcPath, "may not specify more than 1 volume type"))
 		}
@@ -1635,7 +1687,7 @@ func ValidatePersistentVolumeClaimTemplate(claimTemplate *core.PersistentVolumeC
 
 func ValidateTemplateObjectMeta(objMeta *metav1.ObjectMeta, fldPath *field.Path) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateAnnotations(objMeta.Annotations, fldPath.Child("annotations"))
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabels(objMeta.Labels, fldPath.Child("labels"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabels(objMeta.Labels, fldPath.Child("labels"))...)
 	// All other fields are not supported and thus must not be set
 	// to avoid confusion.  We could reject individual fields,
 	// but then adding a new one to ObjectMeta wouldn't be checked
@@ -2036,10 +2088,10 @@ func ValidationOptionsForPersistentVolumeClaim(pvc, oldPvc *core.PersistentVolum
 		// If there's no old PVC, use the options based solely on feature enablement
 		return opts
 	}
-	labelSelectorValidationOpts := unversionedvalidation.LabelSelectorValidationOptions{
+	labelSelectorValidationOpts := metavalidation.LabelSelectorValidationOptions{
 		AllowInvalidLabelValueInSelector: opts.AllowInvalidLabelValueInSelector,
 	}
-	if len(unversionedvalidation.ValidateLabelSelector(oldPvc.Spec.Selector, labelSelectorValidationOpts, nil)) > 0 {
+	if len(metavalidation.ValidateLabelSelector(oldPvc.Spec.Selector, labelSelectorValidationOpts, nil)) > 0 {
 		// If the old object had an invalid label selector, continue to allow it in the new object
 		opts.AllowInvalidLabelValueInSelector = true
 	}
@@ -2060,10 +2112,10 @@ func ValidationOptionsForPersistentVolumeClaimTemplate(claimTemplate, oldClaimTe
 		// If there's no old PVC template, use the options based solely on feature enablement
 		return opts
 	}
-	labelSelectorValidationOpts := unversionedvalidation.LabelSelectorValidationOptions{
+	labelSelectorValidationOpts := metavalidation.LabelSelectorValidationOptions{
 		AllowInvalidLabelValueInSelector: opts.AllowInvalidLabelValueInSelector,
 	}
-	if len(unversionedvalidation.ValidateLabelSelector(oldClaimTemplate.Spec.Selector, labelSelectorValidationOpts, nil)) > 0 {
+	if len(metavalidation.ValidateLabelSelector(oldClaimTemplate.Spec.Selector, labelSelectorValidationOpts, nil)) > 0 {
 		// If the old object had an invalid label selector, continue to allow it in the new object
 		opts.AllowInvalidLabelValueInSelector = true
 	}
@@ -2136,10 +2188,10 @@ func ValidatePersistentVolumeClaimSpec(spec *core.PersistentVolumeClaimSpec, fld
 		allErrs = append(allErrs, field.Required(fldPath.Child("accessModes"), "at least 1 access mode is required"))
 	}
 	if spec.Selector != nil {
-		labelSelectorValidationOpts := unversionedvalidation.LabelSelectorValidationOptions{
+		labelSelectorValidationOpts := metavalidation.LabelSelectorValidationOptions{
 			AllowInvalidLabelValueInSelector: opts.AllowInvalidLabelValueInSelector,
 		}
-		allErrs = append(allErrs, unversionedvalidation.ValidateLabelSelector(spec.Selector, labelSelectorValidationOpts, fldPath.Child("selector"))...)
+		allErrs = append(allErrs, metavalidation.ValidateLabelSelector(spec.Selector, labelSelectorValidationOpts, fldPath.Child("selector"))...)
 	}
 
 	expandedSupportedAccessModes := sets.StringKeySet(supportedAccessModes)
@@ -3620,7 +3672,7 @@ func ValidateTolerations(tolerations []core.Toleration, fldPath *field.Path) fie
 		idxPath := fldPath.Index(i)
 		// validate the toleration key
 		if len(toleration.Key) > 0 {
-			allErrors = append(allErrors, unversionedvalidation.ValidateLabelName(toleration.Key, idxPath.Child("key"))...)
+			allErrors = append(allErrors, metavalidation.ValidateLabelName(toleration.Key, idxPath.Child("key"))...)
 		}
 
 		// empty toleration key with Exists operator and empty value means match all taints
@@ -3791,7 +3843,7 @@ func ValidatePodSpec(spec *core.PodSpec, podMeta *metav1.ObjectMeta, fldPath *fi
 	allErrs = append(allErrs, validateEphemeralContainers(spec.EphemeralContainers, spec.Containers, spec.InitContainers, vols, podClaimNames, fldPath.Child("ephemeralContainers"), opts)...)
 	allErrs = append(allErrs, validateRestartPolicy(&spec.RestartPolicy, fldPath.Child("restartPolicy"))...)
 	allErrs = append(allErrs, validateDNSPolicy(&spec.DNSPolicy, fldPath.Child("dnsPolicy"))...)
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabels(spec.NodeSelector, fldPath.Child("nodeSelector"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabels(spec.NodeSelector, fldPath.Child("nodeSelector"))...)
 	allErrs = append(allErrs, ValidatePodSecurityContext(spec.SecurityContext, spec, fldPath, fldPath.Child("securityContext"), opts)...)
 	allErrs = append(allErrs, validateImagePullSecrets(spec.ImagePullSecrets, fldPath.Child("imagePullSecrets"))...)
 	allErrs = append(allErrs, validateAffinity(spec.Affinity, opts, fldPath.Child("affinity"))...)
@@ -3990,7 +4042,7 @@ func ValidateNodeSelectorRequirement(rq core.NodeSelectorRequirement, fldPath *f
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("operator"), rq.Operator, "not a valid selector operator"))
 	}
 
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabelName(rq.Key, fldPath.Child("key"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabelName(rq.Key, fldPath.Child("key"))...)
 
 	return allErrs
 }
@@ -4075,7 +4127,7 @@ func validateTopologySelectorLabelRequirement(rq core.TopologySelectorLabelRequi
 		valueSet.Insert(value)
 	}
 
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabelName(rq.Key, fldPath.Child("key"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabelName(rq.Key, fldPath.Child("key"))...)
 
 	return valueSet, allErrs
 }
@@ -4170,7 +4222,7 @@ func validatePodAffinityTerm(podAffinityTerm core.PodAffinityTerm, allowInvalidL
 	if len(podAffinityTerm.TopologyKey) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("topologyKey"), "can not be empty"))
 	}
-	return append(allErrs, unversionedvalidation.ValidateLabelName(podAffinityTerm.TopologyKey, fldPath.Child("topologyKey"))...)
+	return append(allErrs, metavalidation.ValidateLabelName(podAffinityTerm.TopologyKey, fldPath.Child("topologyKey"))...)
 }
 
 // validatePodAffinityTerms tests that the specified podAffinityTerms fields have valid data
@@ -4958,7 +5010,7 @@ func ValidateService(service *core.Service) field.ErrorList {
 	}
 
 	if service.Spec.Selector != nil {
-		allErrs = append(allErrs, unversionedvalidation.ValidateLabels(service.Spec.Selector, specPath.Child("selector"))...)
+		allErrs = append(allErrs, metavalidation.ValidateLabels(service.Spec.Selector, specPath.Child("selector"))...)
 	}
 
 	if len(service.Spec.SessionAffinity) == 0 {
@@ -5330,7 +5382,7 @@ func ValidateReplicationControllerSpec(spec *core.ReplicationControllerSpec, fld
 // ValidatePodTemplateSpec validates the spec of a pod template
 func ValidatePodTemplateSpec(spec *core.PodTemplateSpec, fldPath *field.Path, opts PodValidationOptions) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabels(spec.Labels, fldPath.Child("labels"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabels(spec.Labels, fldPath.Child("labels"))...)
 	allErrs = append(allErrs, ValidateAnnotations(spec.Annotations, fldPath.Child("annotations"))...)
 	allErrs = append(allErrs, ValidatePodSpecificAnnotations(spec.Annotations, &spec.Spec, fldPath.Child("annotations"), opts)...)
 	allErrs = append(allErrs, ValidatePodSpec(&spec.Spec, nil, fldPath.Child("spec"), opts)...)
@@ -5384,7 +5436,7 @@ func validateNodeTaints(taints []core.Taint, fldPath *field.Path) field.ErrorLis
 	for i, currTaint := range taints {
 		idxPath := fldPath.Index(i)
 		// validate the taint key
-		allErrors = append(allErrors, unversionedvalidation.ValidateLabelName(currTaint.Key, idxPath.Child("key"))...)
+		allErrors = append(allErrors, metavalidation.ValidateLabelName(currTaint.Key, idxPath.Child("key"))...)
 		// validate the taint value
 		if errs := validation.IsValidLabelValue(currTaint.Value); len(errs) != 0 {
 			allErrors = append(allErrors, field.Invalid(idxPath.Child("value"), currTaint.Value, strings.Join(errs, ";")))
@@ -6918,7 +6970,7 @@ func validateTopologySpreadConstraints(constraints []core.TopologySpreadConstrai
 		}
 		allErrs = append(allErrs, validateMatchLabelKeys(subFldPath.Child("matchLabelKeys"), constraint.MatchLabelKeys, constraint.LabelSelector)...)
 		if !opts.AllowInvalidTopologySpreadConstraintLabelSelector {
-			allErrs = append(allErrs, unversionedvalidation.ValidateLabelSelector(constraint.LabelSelector, unversionedvalidation.LabelSelectorValidationOptions{AllowInvalidLabelValueInSelector: false}, subFldPath.Child("labelSelector"))...)
+			allErrs = append(allErrs, metavalidation.ValidateLabelSelector(constraint.LabelSelector, metavalidation.LabelSelectorValidationOptions{AllowInvalidLabelValueInSelector: false}, subFldPath.Child("labelSelector"))...)
 		}
 	}
 
@@ -7014,7 +7066,7 @@ func validateMatchLabelKeys(fldPath *field.Path, matchLabelKeys []string, labelS
 	}
 
 	for i, key := range matchLabelKeys {
-		allErrs = append(allErrs, unversionedvalidation.ValidateLabelName(key, fldPath.Index(i))...)
+		allErrs = append(allErrs, metavalidation.ValidateLabelName(key, fldPath.Index(i))...)
 		if labelSelectorKeys.Has(key) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), key, "exists in both matchLabelKeys and labelSelector"))
 		}
@@ -7323,9 +7375,9 @@ func sameLoadBalancerClass(oldService, service *core.Service) bool {
 
 func ValidatePodAffinityTermSelector(podAffinityTerm core.PodAffinityTerm, allowInvalidLabelValueInSelector bool, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
-	labelSelectorValidationOptions := unversionedvalidation.LabelSelectorValidationOptions{AllowInvalidLabelValueInSelector: allowInvalidLabelValueInSelector}
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabelSelector(podAffinityTerm.LabelSelector, labelSelectorValidationOptions, fldPath.Child("labelSelector"))...)
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabelSelector(podAffinityTerm.NamespaceSelector, labelSelectorValidationOptions, fldPath.Child("namespaceSelector"))...)
+	labelSelectorValidationOptions := metavalidation.LabelSelectorValidationOptions{AllowInvalidLabelValueInSelector: allowInvalidLabelValueInSelector}
+	allErrs = append(allErrs, metavalidation.ValidateLabelSelector(podAffinityTerm.LabelSelector, labelSelectorValidationOptions, fldPath.Child("labelSelector"))...)
+	allErrs = append(allErrs, metavalidation.ValidateLabelSelector(podAffinityTerm.NamespaceSelector, labelSelectorValidationOptions, fldPath.Child("namespaceSelector"))...)
 	return allErrs
 }
 
