@@ -1678,6 +1678,17 @@ type ServiceAccountTokenProjection struct {
 	Path string `json:"path" protobuf:"bytes,3,opt,name=path"`
 }
 
+// ClusterTrustBundlePEMProjection allows a pod to access the
+// `.spec.pemTrustAnchors` field of a ClusterTrustBundle object in an
+// auto-updating file.
+type ClusterTrustBundlePEMProjection struct {
+	// The ClusterTrustBundle to use.
+	Name string `json:"name" protobuf:"bytes,1,rep,name=name"`
+
+	// Relative path from the volume root to write the bundle.
+	Path string `json:"path" protobuf:"bytes,2,rep,name=path"`
+}
+
 // Represents a projected volume source
 type ProjectedVolumeSource struct {
 	// sources is the list of volume projections
@@ -1709,6 +1720,11 @@ type VolumeProjection struct {
 	// serviceAccountToken is information about the serviceAccountToken data to project
 	// +optional
 	ServiceAccountToken *ServiceAccountTokenProjection `json:"serviceAccountToken,omitempty" protobuf:"bytes,4,opt,name=serviceAccountToken"`
+	// clusterTrustBundlePEM requests projection of a ClusterTrustBundle's
+	// pemTrustAnchors field into a file.
+	//
+	// +optional
+	ClusterTrustBundlePEM *ClusterTrustBundlePEMProjection `json:"clusterTrustBundlePEM,omitempty" protobuf:"bytes,5,opt,name=clusterTrustBundlePEM"`
 }
 
 const (

@@ -414,6 +414,10 @@
                         "audience": "audienceValue",
                         "expirationSeconds": 2,
                         "path": "pathValue"
+                      },
+                      "clusterTrustBundlePEM": {
+                        "name": "nameValue",
+                        "path": "pathValue"
                       }
                     }
                   ],

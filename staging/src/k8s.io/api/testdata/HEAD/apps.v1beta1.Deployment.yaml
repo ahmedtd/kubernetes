@@ -1056,7 +1056,10 @@ spec:
         projected:
           defaultMode: 2
           sources:
-          - configMap:
+          - clusterTrustBundlePEM:
+              name: nameValue
+              path: pathValue
+            configMap:
               items:
               - key: keyValue
                 mode: 3

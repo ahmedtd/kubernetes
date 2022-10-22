@@ -1604,6 +1604,17 @@ type ServiceAccountTokenProjection struct {
 	Path string
 }
 
+// ClusterTrustBundlePEMProjection allows a pod to access the
+// `.spec.pemTrustAnchors` field of a ClusterTrustBundle object in an
+// auto-updating file.
+type ClusterTrustBundlePEMProjection struct {
+	// The ClusterTrustBundle to use.
+	Name string
+
+	// Relative path from the volume root to write the bundle.
+	Path string
+}
+
 // ProjectedVolumeSource represents a projected volume source
 type ProjectedVolumeSource struct {
 	// list of volume projections
@@ -1629,6 +1640,8 @@ type VolumeProjection struct {
 	ConfigMap *ConfigMapProjection
 	// information about the serviceAccountToken data to project
 	ServiceAccountToken *ServiceAccountTokenProjection
+	// information about the ClusterTrustBundle data to project
+	ClusterTrustBundlePEM *ClusterTrustBundlePEMProjection
 }
 
 // KeyToPath maps a string key to a path within a volume.

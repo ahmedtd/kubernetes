@@ -201,6 +201,8 @@ func (s *Plugin) Validate(ctx context.Context, a admission.Attributes, o admissi
 				}
 			}
 		}
+		// TODO(KEP-3257): Forbid mirror pods from using ClusterTrustBundlePEM
+		// projections.
 		return nil
 	}
 

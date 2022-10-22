@@ -21,10 +21,11 @@ package v1
 // VolumeProjectionApplyConfiguration represents an declarative configuration of the VolumeProjection type for use
 // with apply.
 type VolumeProjectionApplyConfiguration struct {
-	Secret              *SecretProjectionApplyConfiguration              `json:"secret,omitempty"`
-	DownwardAPI         *DownwardAPIProjectionApplyConfiguration         `json:"downwardAPI,omitempty"`
-	ConfigMap           *ConfigMapProjectionApplyConfiguration           `json:"configMap,omitempty"`
-	ServiceAccountToken *ServiceAccountTokenProjectionApplyConfiguration `json:"serviceAccountToken,omitempty"`
+	Secret                *SecretProjectionApplyConfiguration                `json:"secret,omitempty"`
+	DownwardAPI           *DownwardAPIProjectionApplyConfiguration           `json:"downwardAPI,omitempty"`
+	ConfigMap             *ConfigMapProjectionApplyConfiguration             `json:"configMap,omitempty"`
+	ServiceAccountToken   *ServiceAccountTokenProjectionApplyConfiguration   `json:"serviceAccountToken,omitempty"`
+	ClusterTrustBundlePEM *ClusterTrustBundlePEMProjectionApplyConfiguration `json:"clusterTrustBundlePEM,omitempty"`
 }
 
 // VolumeProjectionApplyConfiguration constructs an declarative configuration of the VolumeProjection type for use with
@@ -62,5 +63,13 @@ func (b *VolumeProjectionApplyConfiguration) WithConfigMap(value *ConfigMapProje
 // If called multiple times, the ServiceAccountToken field is set to the value of the last call.
 func (b *VolumeProjectionApplyConfiguration) WithServiceAccountToken(value *ServiceAccountTokenProjectionApplyConfiguration) *VolumeProjectionApplyConfiguration {
 	b.ServiceAccountToken = value
+	return b
+}
+
+// WithClusterTrustBundlePEM sets the ClusterTrustBundlePEM field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ClusterTrustBundlePEM field is set to the value of the last call.
+func (b *VolumeProjectionApplyConfiguration) WithClusterTrustBundlePEM(value *ClusterTrustBundlePEMProjectionApplyConfiguration) *VolumeProjectionApplyConfiguration {
+	b.ClusterTrustBundlePEM = value
 	return b
 }

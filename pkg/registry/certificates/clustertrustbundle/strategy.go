@@ -137,7 +137,7 @@ func normalizePEMTrustAnchors(in string) (string, error) {
 	}
 
 	blockSlice := []string{}
-	for block, _ := range blockSet {
+	for block := range blockSet {
 		blockSlice = append(blockSlice, block)
 	}
 

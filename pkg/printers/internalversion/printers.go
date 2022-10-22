@@ -31,8 +31,8 @@ import (
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	certificatesv1beta1 "k8s.io/api/certificates/v1beta1"
 	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
+	certificatesv1beta1 "k8s.io/api/certificates/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	apiv1 "k8s.io/api/core/v1"
 	discoveryv1beta1 "k8s.io/api/discovery/v1beta1"
@@ -422,7 +422,7 @@ func AddHandlers(h printers.PrintHandler) {
 
 	clusterTrustBundleColumnDefinitions := []metav1.TableColumnDefinition{
 		{Name: "Name", Type: "string", Format: "name", Description: metav1.ObjectMeta{}.SwaggerDoc()["name"]},
-		{Name: "SignerName", Type:"string", Description: certificatesv1alpha1.ClusterTrustBundleSpec{}.SwaggerDoc()["signerName"]},
+		{Name: "SignerName", Type: "string", Description: certificatesv1alpha1.ClusterTrustBundleSpec{}.SwaggerDoc()["signerName"]},
 	}
 	h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundle)
 	h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundleList)

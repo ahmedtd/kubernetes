@@ -218,6 +218,16 @@ func (ClientIPConfig) SwaggerDoc() map[string]string {
 	return map_ClientIPConfig
 }
 
+var map_ClusterTrustBundlePEMProjection = map[string]string{
+	"":     "ClusterTrustBundlePEMProjection allows a pod to access the `.spec.pemTrustAnchors` field of a ClusterTrustBundle object in an auto-updating file.",
+	"name": "The ClusterTrustBundle to use.",
+	"path": "Relative path from the volume root to write the bundle.",
+}
+
+func (ClusterTrustBundlePEMProjection) SwaggerDoc() map[string]string {
+	return map_ClusterTrustBundlePEMProjection
+}
+
 var map_ComponentCondition = map[string]string{
 	"":        "Information about the condition of a component.",
 	"type":    "Type of condition for a component. Valid value: \"Healthy\"",
@@ -2470,11 +2480,12 @@ func (VolumeNodeAffinity) SwaggerDoc() map[string]string {
 }
 
 var map_VolumeProjection = map[string]string{
-	"":                    "Projection that may be projected along with other supported volume types",
-	"secret":              "secret information about the secret data to project",
-	"downwardAPI":         "downwardAPI information about the downwardAPI data to project",
-	"configMap":           "configMap information about the configMap data to project",
-	"serviceAccountToken": "serviceAccountToken is information about the serviceAccountToken data to project",
+	"":                      "Projection that may be projected along with other supported volume types",
+	"secret":                "secret information about the secret data to project",
+	"downwardAPI":           "downwardAPI information about the downwardAPI data to project",
+	"configMap":             "configMap information about the configMap data to project",
+	"serviceAccountToken":   "serviceAccountToken is information about the serviceAccountToken data to project",
+	"clusterTrustBundlePEM": "clusterTrustBundlePEM requests projection of a ClusterTrustBundle's pemTrustAnchors field into a file.",
 }
 
 func (VolumeProjection) SwaggerDoc() map[string]string {

@@ -409,6 +409,17 @@ message ClientIPConfig {
   optional int32 timeoutSeconds = 1;
 }
 
+// ClusterTrustBundlePEMProjection allows a pod to access the
+// `.spec.pemTrustAnchors` field of a ClusterTrustBundle object in an
+// auto-updating file.
+message ClusterTrustBundlePEMProjection {
+  // The ClusterTrustBundle to use.
+  optional string name = 1;
+
+  // Relative path from the volume root to write the bundle.
+  optional string path = 2;
+}
+
 // Information about the condition of a component.
 message ComponentCondition {
   // Type of condition for a component.
@@ -5622,6 +5633,12 @@ message VolumeProjection {
   // serviceAccountToken is information about the serviceAccountToken data to project
   // +optional
   optional ServiceAccountTokenProjection serviceAccountToken = 4;
+
+  // clusterTrustBundlePEM requests projection of a ClusterTrustBundle's
+  // pemTrustAnchors field into a file.
+  //
+  // +optional
+  optional ClusterTrustBundlePEMProjection clusterTrustBundlePEM = 5;
 }
 
 // Represents the source of a volume to mount.

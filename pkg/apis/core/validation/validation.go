@@ -1144,6 +1144,15 @@ func validateProjectionSources(projection *core.ProjectedVolumeSource, projectio
 				allErrs = append(allErrs, field.Required(fldPath.Child("path"), ""))
 			}
 		}
+		if projPath := srcPath.Child("clusterTrustBundlePEM"); source.ClusterTrustBundlePEM != nil {
+			numSources++
+			if source.ClusterTrustBundlePEM.Name == "" {
+				allErrs = append(allErrs, field.Required(projPath.Child("name"), ""))
+			}
+			if source.ClusterTrustBundlePEM.Path == "" {
+				allErrs = append(allErrs, field.Required(projPath.Child("path"), ""))
+			}
+		}
 		if numSources > 1 {
 			allErrs = append(allErrs, field.Forbidden(srcPath, "may not specify more than 1 volume type"))
 		}

@@ -332,6 +332,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/core/v1.CinderPersistentVolumeSource":                                                 schema_k8sio_api_core_v1_CinderPersistentVolumeSource(ref),
 		"k8s.io/api/core/v1.CinderVolumeSource":                                                           schema_k8sio_api_core_v1_CinderVolumeSource(ref),
 		"k8s.io/api/core/v1.ClientIPConfig":                                                               schema_k8sio_api_core_v1_ClientIPConfig(ref),
+		"k8s.io/api/core/v1.ClusterTrustBundlePEMProjection":                                              schema_k8sio_api_core_v1_ClusterTrustBundlePEMProjection(ref),
 		"k8s.io/api/core/v1.ComponentCondition":                                                           schema_k8sio_api_core_v1_ComponentCondition(ref),
 		"k8s.io/api/core/v1.ComponentStatus":                                                              schema_k8sio_api_core_v1_ComponentStatus(ref),
 		"k8s.io/api/core/v1.ComponentStatusList":                                                          schema_k8sio_api_core_v1_ComponentStatusList(ref),
@@ -15961,6 +15962,36 @@ func schema_k8sio_api_core_v1_ClientIPConfig(ref common.ReferenceCallback) commo
 	}
 }
 
+func schema_k8sio_api_core_v1_ClusterTrustBundlePEMProjection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterTrustBundlePEMProjection allows a pod to access the `.spec.pemTrustAnchors` field of a ClusterTrustBundle object in an auto-updating file.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The ClusterTrustBundle to use.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Relative path from the volume root to write the bundle.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "path"},
+			},
+		},
+	}
+}
+
 func schema_k8sio_api_core_v1_ComponentCondition(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -26662,11 +26693,17 @@ func schema_k8sio_api_core_v1_VolumeProjection(ref common.ReferenceCallback) com
 							Ref:         ref("k8s.io/api/core/v1.ServiceAccountTokenProjection"),
 						},
 					},
+					"clusterTrustBundlePEM": {
+						SchemaProps: spec.SchemaProps{
+							Description: "clusterTrustBundlePEM requests projection of a ClusterTrustBundle's pemTrustAnchors field into a file.",
+							Ref:         ref("k8s.io/api/core/v1.ClusterTrustBundlePEMProjection"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
+			"k8s.io/api/core/v1.ClusterTrustBundlePEMProjection", "k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
 	}
 }
 

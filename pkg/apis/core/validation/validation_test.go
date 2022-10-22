@@ -9727,6 +9727,7 @@ func TestValidatePod(t *testing.T) {
 				},
 			},
 		},
+		// TODO(KEP-3257): Add clustertrustbundlepem?
 		"ephemeral volume + PVC, no conflict between them": {
 			ObjectMeta: metav1.ObjectMeta{Name: "123", Namespace: "ns"},
 			Spec: core.PodSpec{

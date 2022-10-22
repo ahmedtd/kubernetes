@@ -537,6 +537,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &applyconfigurationscorev1.CinderVolumeSourceApplyConfiguration{}
 	case corev1.SchemeGroupVersion.WithKind("ClientIPConfig"):
 		return &applyconfigurationscorev1.ClientIPConfigApplyConfiguration{}
+	case corev1.SchemeGroupVersion.WithKind("ClusterTrustBundlePEMProjection"):
+		return &applyconfigurationscorev1.ClusterTrustBundlePEMProjectionApplyConfiguration{}
 	case corev1.SchemeGroupVersion.WithKind("ComponentCondition"):
 		return &applyconfigurationscorev1.ComponentConditionApplyConfiguration{}
 	case corev1.SchemeGroupVersion.WithKind("ComponentStatus"):
