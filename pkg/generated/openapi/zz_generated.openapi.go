@@ -353,6 +353,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/core/v1.CinderVolumeSource":                                                           schema_k8sio_api_core_v1_CinderVolumeSource(ref),
 		"k8s.io/api/core/v1.ClaimSource":                                                                  schema_k8sio_api_core_v1_ClaimSource(ref),
 		"k8s.io/api/core/v1.ClientIPConfig":                                                               schema_k8sio_api_core_v1_ClientIPConfig(ref),
+		"k8s.io/api/core/v1.ClusterTrustBundleProjection":                                                 schema_k8sio_api_core_v1_ClusterTrustBundleProjection(ref),
 		"k8s.io/api/core/v1.ComponentCondition":                                                           schema_k8sio_api_core_v1_ComponentCondition(ref),
 		"k8s.io/api/core/v1.ComponentStatus":                                                              schema_k8sio_api_core_v1_ComponentStatus(ref),
 		"k8s.io/api/core/v1.ComponentStatusList":                                                          schema_k8sio_api_core_v1_ComponentStatusList(ref),
@@ -17029,6 +17030,50 @@ func schema_k8sio_api_core_v1_ClientIPConfig(ref common.ReferenceCallback) commo
 	}
 }
 
+func schema_k8sio_api_core_v1_ClusterTrustBundleProjection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select a single ClusterTrustBundle by object name.  Mutually-exclusive with SignerName and LabelSelector.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select all ClusterTrustBundles that match this signer name. Mutually-exclusive with Name.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"labelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select all ClusterTrustBundles that match this label selector.  Must not be null or empty if SignerName is provided.  Mutually-exclusive with Name.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Relative path from the volume root to write the bundle.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"path"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+	}
+}
+
 func schema_k8sio_api_core_v1_ComponentCondition(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -28076,11 +28121,17 @@ func schema_k8sio_api_core_v1_VolumeProjection(ref common.ReferenceCallback) com
 							Ref:         ref("k8s.io/api/core/v1.ServiceAccountTokenProjection"),
 						},
 					},
+					"clusterTrustBundle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of a ClusterTrustBundle object in an auto-updating file.\n\nAlpha, gated by the ClusterTrustBundleProjection feature gate.\n\nClusterTrustBundle objects can either be selected by name, or by the combination of signer name and a label selector.\n\nWhen selecting by name, the referenced ClusterTrustBundle object must have an empty spec.signerName field.\n\nWhen selecting by signer name, the contents of all ClusterTrustBundle objects associated with the signer and matching the label will be unified and deduplicated.\n\nKubelet performs aggressive normalization of the PEM contents written into the pod filesystem.  Esoteric PEM features such as inter-block comments and block headers are stripped.  Certificates are deduplicated. The ordering of certificates within the file is arbitrary, and Kubelet may change the order over time.",
+							Ref:         ref("k8s.io/api/core/v1.ClusterTrustBundleProjection"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
+			"k8s.io/api/core/v1.ClusterTrustBundleProjection", "k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
 	}
 }
 
