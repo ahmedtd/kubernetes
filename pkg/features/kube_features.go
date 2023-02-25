@@ -899,6 +899,12 @@ const (
 	// Enables support for 'HostProcess' containers on Windows nodes.
 	WindowsHostProcessContainers featuregate.Feature = "WindowsHostProcessContainers"
 
+	// owner: @ahmedtd
+	// alpha: v1.28
+	//
+	// Enable WorkloadCertificate objects and Kubelet integration.
+	WorkloadCertificate featuregate.Feature = "WorkloadCertificate"
+
 	// owner: @kerthcet
 	// kep: https://kep.k8s.io/3094
 	// alpha: v1.25
@@ -1165,6 +1171,8 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	WindowsHostNetwork: {Default: true, PreRelease: featuregate.Alpha},
 
 	WindowsHostProcessContainers: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.28
+
+	WorkloadCertificate: {Default: false, PreRelease: featuregate.Alpha},
 
 	NodeInclusionPolicyInPodTopologySpread: {Default: true, PreRelease: featuregate.Beta},
 
