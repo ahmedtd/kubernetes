@@ -23,7 +23,7 @@ import (
 )
 
 func addConversionFuncs(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(
+	err := scheme.AddFieldLabelConversionFunc(
 		SchemeGroupVersion.WithKind("ClusterTrustBundle"),
 		func(label, value string) (string, string, error) {
 			switch label {
@@ -34,4 +34,24 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 			}
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	err = scheme.AddFieldLabelConversionFunc(
+		SchemeGroupVersion.WithKind("WorkloadCertificate"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.signerName":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

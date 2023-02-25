@@ -157,6 +157,7 @@ const (
 	CertificateApproved RequestConditionType = "Approved"
 	CertificateDenied   RequestConditionType = "Denied"
 	CertificateFailed   RequestConditionType = "Failed"
+	CertificatePending  RequestConditionType = "Pending"
 )
 
 type CertificateSigningRequestCondition struct {
@@ -276,4 +277,131 @@ type ClusterTrustBundleList struct {
 
 	// Items is a collection of ClusterTrustBundle objects
 	Items []ClusterTrustBundle
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type WorkloadCertificate struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	//+optional
+	Spec WorkloadCertificateSpec
+
+	//+optional
+	Status WorkloadCertificateStatus
+}
+
+type WorkloadCertificateSpec struct {
+	// SignerName is the signer that should handle this request.
+	//
+	// Immutable after creation.
+	SignerName string
+
+	// ServiceAccount is the name of the service account of the pod being
+	// asserted.
+	//
+	// Immutable after creation.
+	ServiceAccount string
+
+	// Pod is the name of the pod being asserted.
+	//
+	// Immutable after creation.
+	Pod string
+
+	// PodUID is the UID of the pod being asserted.
+	//
+	// Immutable after creation.
+	PodUID string
+
+	// Node is the node on which the pod being asserted is running.
+	//
+	// Immutable after creation.
+	Node string
+
+	// Requester is the identity of the certificate requester (typically either
+	// the node identity, or the service account of a daemonset).
+	//
+	// Immutable after creation.
+	Requester string
+
+	// PublicKey is the the PEM-wrapped public key.
+	// +optional
+	PublicKey string
+}
+
+type WorkloadCertificateStatus struct {
+	// Conditions applied to the request.
+	// +optional
+	Conditions []WorkloadCertificateCondition
+
+	// The controller will place the issued certificate here.
+	// +optional
+	Certificate string
+
+	// The generation at which the controller issued the certificate.
+	// +optional
+	CertificateObservedGeneration int64
+
+	// The NotBefore timestamp extracted from Certificate for ease of use.  Must
+	// be consistent with Certificate.
+	// +optional
+	NotBefore metav1.Time
+
+	// The NotAfter timestamp extracted from Certificate for ease of use.  Must
+	// be consistent with Certificate.
+	// +optional
+	NotAfter metav1.Time
+
+	// When should the node agent begin trying to refresh this certificate?  Must
+	// be between NotBefore and NotAfter.
+	// +optional
+	BeginRefreshAt metav1.Time
+}
+
+// WorkloadCertificateConditionType is the type of a WorkloadCertificateCondition.
+type WorkloadCertificateConditionType string
+
+// Well-known condition types for workload certificates.
+const (
+	// Failed indicates the signer permanently failed to issue the certificate.
+	WorkloadCertificateFailed WorkloadCertificateConditionType = "Failed"
+	// Pending indicates the signer temporarily failed to issue the certificate.
+	WorkloadCertificatePending WorkloadCertificateConditionType = "Pending"
+)
+
+type WorkloadCertificateCondition struct {
+	// type of the condition. Known conditions include "Denied", "Failed", and "Pending".
+	Type WorkloadCertificateConditionType
+	// Status of the condition, one of True, False, Unknown.
+	// Denied, Pending, and Failed conditions may not be "False" or "Unknown".
+	// If unset, should be treated as "True".
+	// +optional
+	Status api.ConditionStatus
+	// brief reason for the request state
+	// +optional
+	Reason string
+	// human readable message with details about the request state
+	// +optional
+	Message string
+	// The generation of the WorkloadCertificate at which this condition was last updated.
+	// +optional
+	ObservedGeneration int64
+	// timestamp for the last update to this condition
+	// +optional
+	LastUpdateTime metav1.Time
+	// lastTransitionTime is the time the condition last transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type WorkloadCertificateList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// Items is a collection of WorkloadCertificate objects
+	Items []WorkloadCertificate
 }

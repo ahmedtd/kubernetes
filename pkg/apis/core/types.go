@@ -1649,6 +1649,19 @@ type ClusterTrustBundleProjection struct {
 	Path string
 }
 
+// WorkloadCertificateProjection gives a pod an auto-rotating key and
+// certificate issued by a given signer.
+type WorkloadCertificateProjection struct {
+	// The signer to request the certificate from.
+	SignerName string
+
+	// Write the private key at this relative path from the volume root.
+	PrivateKeyPath string
+
+	// Write the certificate chain at this relative path from the volume root.
+	CertificatePath string
+}
+
 // ProjectedVolumeSource represents a projected volume source
 type ProjectedVolumeSource struct {
 	// list of volume projections
@@ -1676,6 +1689,8 @@ type VolumeProjection struct {
 	ServiceAccountToken *ServiceAccountTokenProjection
 	// information about the ClusterTrustBundle data to project
 	ClusterTrustBundle *ClusterTrustBundleProjection
+	// Project a workload certificate.
+	WorkloadCertificate *WorkloadCertificateProjection
 }
 
 // KeyToPath maps a string key to a path within a volume.

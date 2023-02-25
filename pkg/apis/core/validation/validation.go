@@ -1205,6 +1205,13 @@ func validateProjectionSources(projection *core.ProjectedVolumeSource, projectio
 				allErrs = append(allErrs, field.Invalid(fldPath, curPath, "conflicting duplicate paths"))
 			}
 		}
+		if projPath := srcPath.Child("workloadCertificate"); source.WorkloadCertificate != nil {
+			numSources++
+
+			if source.WorkloadCertificate.SignerName == "" {
+				allErrs = append(allErrs, field.Required(projPath.Child("signerName"), "must be a valid object name"))
+			}
+		}
 		if numSources > 1 {
 			allErrs = append(allErrs, field.Forbidden(srcPath, "may not specify more than 1 volume type"))
 		}

@@ -1728,6 +1728,38 @@ type ClusterTrustBundleProjection struct {
 	Path string `json:"path" protobuf:"bytes,4,rep,name=path"`
 }
 
+// ClusterObjectReference designates a single cluster-scoped object.
+type ClusterObjectReference struct {
+	// Name of the referent.
+	// +optional
+	Name string `json:"name" protobuf:"bytes,1,rep,name=name"`
+}
+
+// SignerAndLabelReference  selects objects based on an intersection of signer
+// name and label selector.
+type SignerAndLabelReference struct {
+	// Select objects associated with this signer.
+	// +optional
+	SignerName string `json:"signerName" protobuf:"bytes,1,rep,name=signerName"`
+
+	// Select objects that match this label selector.
+	// +optional
+	LabelSelector metav1.LabelSelector `json:"labelSelector" protobuf:"bytes,2,rep,name=labelSelector"`
+}
+
+// WorkloadCertificateProjection gives a pod an auto-rotating key and
+// certificate issued by a given signer.
+type WorkloadCertificateProjection struct {
+	// The signer to request the certificate from.
+	SignerName string `json:"signerName" protobuf:"bytes,1,rep,name=signerName"`
+
+	// Write the private key at this relative path from the volume root.
+	PrivateKeyPath string `json:"privateKeyPath" protobuf:"bytes,2,rep,name=privateKeyPath"`
+
+	// Write the certificate chain at this relative path from the volume root.
+	CertificatePath string `json:"certificatePath" protobuf:"bytes,3,rep,name=certificatePath"`
+}
+
 // Represents a projected volume source
 type ProjectedVolumeSource struct {
 	// sources is the list of volume projections
@@ -1783,6 +1815,10 @@ type VolumeProjection struct {
 	//
 	// +optional
 	ClusterTrustBundle *ClusterTrustBundleProjection `json:"clusterTrustBundle,omitempty" protobuf:"bytes,5,opt,name=clusterTrustBundle"`
+	
+	// workloadCertificate projects an auto-rotating key and certificate (issed by the named signer).
+	// +optional
+	WorkloadCertificate *WorkloadCertificateProjection `json:"workloadCertificate,omitempty" protobuf:"bytes,6,opt,name=workloadCertificate"`
 }
 
 const (
