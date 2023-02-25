@@ -412,8 +412,17 @@ func AddHandlers(h printers.PrintHandler) {
 		{Name: "Name", Type: "string", Format: "name", Description: metav1.ObjectMeta{}.SwaggerDoc()["name"]},
 		{Name: "SignerName", Type: "string", Description: certificatesv1alpha1.ClusterTrustBundleSpec{}.SwaggerDoc()["signerName"]},
 	}
-	h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundle)
-	h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundleList)
+	_ = h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundle)
+	_ = h.TableHandler(clusterTrustBundleColumnDefinitions, printClusterTrustBundleList)
+
+	workloadCertificateColumnDefinitions := []metav1.TableColumnDefinition{
+		{Name: "Name", Type: "string", Format: "name", Description: metav1.ObjectMeta{}.SwaggerDoc()["name"]},
+		{Name: "Age", Type: "string", Description: metav1.ObjectMeta{}.SwaggerDoc()["creationTimestamp"]},
+		{Name: "SignerName", Type: "string", Description: certificatesv1alpha1.WorkloadCertificateSpec{}.SwaggerDoc()["signerName"]},
+		{Name: "Condition", Type: "string", Description: certificatesv1alpha1.WorkloadCertificateStatus{}.SwaggerDoc()["conditions"]},
+	}
+	_ = h.TableHandler(workloadCertificateColumnDefinitions, printWorkloadCertificate)
+	_ = h.TableHandler(workloadCertificateColumnDefinitions, printWorkloadCertificateList)
 
 	leaseColumnDefinitions := []metav1.TableColumnDefinition{
 		{Name: "Name", Type: "string", Format: "name", Description: metav1.ObjectMeta{}.SwaggerDoc()["name"]},
@@ -2111,7 +2120,7 @@ func printClusterTrustBundle(obj *certificates.ClusterTrustBundle, options print
 	if obj.Spec.SignerName != "" {
 		signerName = obj.Spec.SignerName
 	}
-	row.Cells = append(row.Cells, obj.Name, signerName)
+	row.Cells = append(row.Cells, obj.Name, translateTimestampSince(obj.CreationTimestamp), signerName)
 	return []metav1.TableRow{row}, nil
 }
 
@@ -2119,6 +2128,40 @@ func printClusterTrustBundleList(list *certificates.ClusterTrustBundleList, opti
 	rows := make([]metav1.TableRow, 0, len(list.Items))
 	for i := range list.Items {
 		r, err := printClusterTrustBundle(&list.Items[i], options)
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, r...)
+	}
+	return rows, nil
+}
+
+func printWorkloadCertificate(wc *certificates.WorkloadCertificate, options printers.GenerateOptions) ([]metav1.TableRow, error) {
+	row := metav1.TableRow{
+		Object: runtime.RawExtension{Object: wc},
+	}
+	row.Cells = append(row.Cells, wc.Name, translateTimestampSince(wc.CreationTimestamp), wc.Spec.SignerName, extractWCStatus(wc))
+	return []metav1.TableRow{row}, nil
+}
+
+func extractWCStatus(wcr *certificates.WorkloadCertificate) string {
+	for _, c := range wcr.Status.Conditions {
+		if c.Type == certificates.WorkloadCertificateFailed && c.ObservedGeneration == wcr.ObjectMeta.Generation {
+			return "Failed"
+		}
+	}
+
+	if len(wcr.Status.Certificate) > 0 && wcr.Status.CertificateObservedGeneration == wcr.ObjectMeta.Generation {
+		return "Issued"
+	}
+
+	return "Pending"
+}
+
+func printWorkloadCertificateList(list *certificates.WorkloadCertificateList, options printers.GenerateOptions) ([]metav1.TableRow, error) {
+	rows := make([]metav1.TableRow, 0, len(list.Items))
+	for i := range list.Items {
+		r, err := printWorkloadCertificate(&list.Items[i], options)
 		if err != nil {
 			return nil, err
 		}
