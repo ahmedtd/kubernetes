@@ -664,3 +664,70 @@ func validateTrustBundle(path *field.Path, in string) field.ErrorList {
 
 	return allErrors
 }
+
+// We don't care what you call your WorkloadCertificates.
+func validateWorkloadCertificateName(name string, prefix bool) []string {
+	return nil
+}
+
+func ValidateWorkloadCertificateCreate(wc *certificates.WorkloadCertificate) field.ErrorList {
+	var allErrors field.ErrorList
+
+	metaErrors := apivalidation.ValidateObjectMeta(&wc.ObjectMeta, true, validateWorkloadCertificateName, field.NewPath("metadata"))
+	allErrors = append(allErrors, metaErrors...)
+
+	signerNameErrors := ValidateSignerName(field.NewPath("spec", "signerName"), wc.Spec.SignerName)
+	allErrors = append(allErrors, signerNameErrors...)
+
+	// TODO(KEP-WorkloadCertificates): Validate contents of key.
+
+	// If the creation request sets the certificate (why?), validate it.
+	if len(wc.Status.Certificate) != 0 {
+		if err := validateCertificate([]byte(wc.Status.Certificate)); err != nil {
+			allErrors = append(allErrors, field.Invalid(field.NewPath("status", "certificate"), "<certificate data>", err.Error()))
+		}
+	}
+
+	return allErrors
+}
+
+func ValidateWorkloadCertificateUpdate(newWC, oldWC *certificates.WorkloadCertificate) field.ErrorList {
+	var allErrors field.ErrorList
+
+	allErrors = append(allErrors, apivalidation.ValidateObjectMeta(&newWC.ObjectMeta, true, validateWorkloadCertificateName, field.NewPath("metadata"))...)
+
+	// Most fields of the WorkloadCertificate are immutable.
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.SignerName, oldWC.Spec.SignerName, field.NewPath("spec", "signerName"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.ServiceAccount, oldWC.Spec.ServiceAccount, field.NewPath("spec", "serviceAccount"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.ServiceAccountUID, oldWC.Spec.ServiceAccountUID, field.NewPath("spec", "serviceAccountUID"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.Pod, oldWC.Spec.Pod, field.NewPath("spec", "pod"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.PodUID, oldWC.Spec.PodUID, field.NewPath("spec", "podUID"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.Node, oldWC.Spec.Node, field.NewPath("spec", "node"))...)
+	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.Requester, oldWC.Spec.Requester, field.NewPath("spec", "requester"))...)
+
+	// TODO(KEP-WorkloadCertificates): PublicKeyPEM is mutable, for rekeying operations.  Validate it if set.
+
+	// If we are setting the certificate, check its contents.
+	if len(newWC.Status.Certificate) != 0 && newWC.Status.Certificate != oldWC.Status.Certificate {
+		if err := validateCertificate([]byte(newWC.Status.Certificate)); err != nil {
+			allErrors = append(allErrors, field.Invalid(field.NewPath("status", "certificate"), "<certificate data>", err.Error()))
+		}
+	}
+
+	return allErrors
+}
+
+func ValidateWorkloadCertificateStatusUpdate(newWC, oldWC *certificates.WorkloadCertificate) field.ErrorList {
+	var allErrors field.ErrorList
+
+	// TODO(KEP-WorkloadCertificates): status updates may not modify metadata or spec
+
+	// If we are setting the certificate, check its contents.
+	if len(newWC.Status.Certificate) != 0 && newWC.Status.Certificate != oldWC.Status.Certificate {
+		if err := validateCertificate([]byte(newWC.Status.Certificate)); err != nil {
+			allErrors = append(allErrors, field.Invalid(field.NewPath("status", "certificate"), "<certificate data>", err.Error()))
+		}
+	}
+
+	return allErrors
+}

@@ -42,7 +42,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		SchemeGroupVersion.WithKind("WorkloadCertificate"),
 		func(label, value string) (string, string, error) {
 			switch label {
-			case "metadata.name", "metadata.namespace", "spec.signerName":
+			case "metadata.name", "metadata.namespace", "spec.signerName", "spec.node":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)

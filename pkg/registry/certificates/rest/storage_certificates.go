@@ -30,6 +30,7 @@ import (
 	"k8s.io/kubernetes/pkg/features"
 	certificatestore "k8s.io/kubernetes/pkg/registry/certificates/certificates/storage"
 	clustertrustbundlestore "k8s.io/kubernetes/pkg/registry/certificates/clustertrustbundle/storage"
+	workloadcertificatestore "k8s.io/kubernetes/pkg/registry/certificates/workloadcertificate/storage"
 )
 
 type RESTStorageProvider struct{}
@@ -82,6 +83,19 @@ func (p RESTStorageProvider) v1alpha1Storage(apiResourceConfigSource serverstora
 			storage[resource] = bundleStorage
 		} else {
 			klog.Warning("ClusterTrustBundle storage is disabled because the ClusterTrustBundle feature gate is disabled")
+		}
+	}
+
+	if resource := "workloadcertificates"; apiResourceConfigSource.ResourceEnabled(certificatesapiv1alpha1.SchemeGroupVersion.WithResource(resource)) {
+		if utilfeature.DefaultFeatureGate.Enabled(features.WorkloadCertificate) {
+			wcrStorage, wcrStatusStorage, err := workloadcertificatestore.NewREST(restOptionsGetter)
+			if err != nil {
+				return nil, err
+			}
+			storage[resource] = wcrStorage
+			storage[resource+"/status"] = wcrStatusStorage
+		} else {
+			klog.Warning("WorkloadCertificate storage is disabled because the WorkloadCertificate feature gate is disabled")
 		}
 	}
 

@@ -74,6 +74,7 @@ func NewStorageFactoryConfig() *StorageFactoryConfig {
 		networking.Resource("clustercidrs").WithVersion("v1alpha1"),
 		networking.Resource("ipaddresses").WithVersion("v1alpha1"),
 		certificates.Resource("clustertrustbundles").WithVersion("v1alpha1"),
+		certificates.Resource("workloadcertificates").WithVersion("v1alpha1"),
 	}
 
 	return &StorageFactoryConfig{
