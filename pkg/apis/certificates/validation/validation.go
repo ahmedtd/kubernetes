@@ -699,7 +699,6 @@ func ValidateWorkloadCertificateUpdate(newWC, oldWC *certificates.WorkloadCertif
 	// Most fields of the WorkloadCertificate are immutable.
 	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.SignerName, oldWC.Spec.SignerName, field.NewPath("spec", "signerName"))...)
 	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.ServiceAccount, oldWC.Spec.ServiceAccount, field.NewPath("spec", "serviceAccount"))...)
-	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.ServiceAccountUID, oldWC.Spec.ServiceAccountUID, field.NewPath("spec", "serviceAccountUID"))...)
 	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.Pod, oldWC.Spec.Pod, field.NewPath("spec", "pod"))...)
 	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.PodUID, oldWC.Spec.PodUID, field.NewPath("spec", "podUID"))...)
 	allErrors = append(allErrors, apivalidation.ValidateImmutableField(newWC.Spec.Node, oldWC.Spec.Node, field.NewPath("spec", "node"))...)

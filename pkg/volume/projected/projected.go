@@ -17,7 +17,12 @@ limitations under the License.
 package projected
 
 import (
+	"context"
+	"crypto/sha512"
+	"encoding/base64"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
@@ -26,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
 	"k8s.io/kubernetes/pkg/volume/downwardapi"
@@ -51,6 +57,7 @@ type projectedPlugin struct {
 	deleteServiceAccountToken func(podUID types.UID)
 	getTrustAnchorsByName     func(name string) (string, error)
 	getTrustAnchorsBySigner   func(signerName string, labelSelector metav1.LabelSelector) (string, error)
+	wcManager                 workloadcertificate.Manager
 }
 
 var _ volume.VolumePlugin = &projectedPlugin{}
@@ -77,6 +84,13 @@ func (plugin *projectedPlugin) Init(host volume.VolumeHost) error {
 	plugin.deleteServiceAccountToken = host.DeleteServiceAccountTokenFunc()
 	plugin.getTrustAnchorsByName = host.GetTrustAnchorsByNameFunc()
 	plugin.getTrustAnchorsBySigner = host.GetTrustAnchorsBySignerFunc()
+
+	var err error
+	plugin.wcManager, err = host.GetWorkloadCertificateManager()
+	if err != nil {
+		return fmt.Errorf("while getting workload certificate manager: %w", err)
+	}
+
 	return nil
 }
 
@@ -261,7 +275,7 @@ func (s *projectedVolumeMounter) collectData(mounterArgs volume.MounterArgs) (ma
 
 	errlist := []error{}
 	payload := make(map[string]volumeutil.FileProjection)
-	for _, source := range s.source.Sources {
+	for i, source := range s.source.Sources {
 		switch {
 		case source.Secret != nil:
 			optional := source.Secret.Optional != nil && *source.Secret.Optional
@@ -383,6 +397,47 @@ func (s *projectedVolumeMounter) collectData(mounterArgs volume.MounterArgs) (ma
 				Mode:   *s.source.DefaultMode,
 				FsUser: mounterArgs.FsUser,
 			}
+		case source.WorkloadCertificate != nil:
+			// The private key file on disk is NOT TRUSTED.  The workload could
+			// have modified it.  Don't attempt to parse it.
+			var keyFileHash [32]byte
+			keyPath := filepath.Join(s.GetPath(), source.WorkloadCertificate.PrivateKeyPath)
+			keyFileBytes, err := os.ReadFile(keyPath)
+			if err == nil { // EQUALS nil
+				keyFileHash = sha512.Sum512_256(keyFileBytes)
+			}
+
+			rekeyPEM, cert, err := s.plugin.wcManager.GetWorkloadCertificate(
+				context.TODO(),
+				source.WorkloadCertificate.SignerName,
+				s.pod.ObjectMeta.Namespace,
+				s.pod.ObjectMeta.Name,
+				string(s.pod.ObjectMeta.UID),
+				s.volName,
+				i,
+				base64.StdEncoding.EncodeToString(keyFileHash[:]),
+			)
+			if err != nil {
+				errlist = append(errlist, err)
+				continue
+			}
+
+			keyPEM := keyFileBytes
+			if rekeyPEM != "" {
+				keyPEM = []byte(rekeyPEM)
+			}
+
+			payload[source.WorkloadCertificate.PrivateKeyPath] = volumeutil.FileProjection{
+				Data:   []byte(keyPEM),
+				Mode:   *s.source.DefaultMode,
+				FsUser: mounterArgs.FsUser,
+			}
+
+			payload[source.WorkloadCertificate.CertificatePath] = volumeutil.FileProjection{
+				Data:   []byte(cert),
+				Mode:   *s.source.DefaultMode,
+				FsUser: mounterArgs.FsUser,
+			}
 		}
 	}
 	return payload, utilerrors.NewAggregate(errlist)
@@ -418,5 +473,5 @@ func getVolumeSource(spec *volume.Spec) (*v1.ProjectedVolumeSource, bool, error)
 		return spec.Volume.Projected, spec.ReadOnly, nil
 	}
 
-	return nil, false, fmt.Errorf("Spec does not reference a projected volume type")
+	return nil, false, fmt.Errorf("spec does not reference a projected volume type")
 }

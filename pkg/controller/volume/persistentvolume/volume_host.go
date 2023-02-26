@@ -31,6 +31,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	vol "k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/util/subpath"
@@ -136,7 +137,11 @@ func (ctrl *PersistentVolumeController) GetTrustAnchorsBySignerFunc() func(_ str
 	}
 }
 
-func (adc *PersistentVolumeController) GetExec(pluginName string) utilexec.Interface {
+func (ctrl *PersistentVolumeController) GetWorkloadCertificateManager() (workloadcertificate.Manager, error) {
+	return nil, fmt.Errorf("GetWorkloadCertificateFunc unsupported in PersistentVolumeController")
+}
+
+func (ctrl *PersistentVolumeController) GetExec(pluginName string) utilexec.Interface {
 	return utilexec.New()
 }
 

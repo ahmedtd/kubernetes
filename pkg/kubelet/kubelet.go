@@ -115,6 +115,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/util/sliceutils"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	httpprobe "k8s.io/kubernetes/pkg/probe/http"
 	"k8s.io/kubernetes/pkg/security/apparmor"
 	"k8s.io/kubernetes/pkg/util/oom"
@@ -817,11 +818,23 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 		klog.InfoS("Not starting ClusterTrustBundle informer because we are in static kubelet mode")
 	}
 
+	var workloadCertificateManager workloadcertificate.Manager
+	if kubeDeps.KubeClient != nil {
+		kubeInformers := informers.NewSharedInformerFactoryWithOptions(kubeDeps.KubeClient, 0)
+		workloadCertificateManager = workloadcertificate.NewInformerManager(kubeDeps.KubeClient, kubeInformers.Certificates().V1alpha1().WorkloadCertificates(), &clock.RealClock{})
+		kubeInformers.Start(wait.NeverStop)
+		klog.InfoS("Started WorkloadCertificate manager")
+	} else {
+		// In static kubelet mode, use a no-op manager.
+		workloadCertificateManager = &workloadcertificate.NoopManager{}
+		klog.InfoS("Using no-op WorkloadCertificate manager because we are in static kubelet mode")
+	}
+
 	// NewInitializedVolumePluginMgr initializes some storageErrors on the Kubelet runtimeState (in csi_plugin.go init)
 	// which affects node ready status. This function must be called before Kubelet is initialized so that the Node
 	// ReadyState is accurate with the storage state.
 	klet.volumePluginMgr, err =
-		NewInitializedVolumePluginMgr(klet, secretManager, configMapManager, tokenManager, clusterTrustBundleManager, kubeDeps.VolumePlugins, kubeDeps.DynamicPluginProber)
+		NewInitializedVolumePluginMgr(klet, secretManager, configMapManager, tokenManager, clusterTrustBundleManager, workloadCertificateManager, kubeDeps.VolumePlugins, kubeDeps.DynamicPluginProber)
 	if err != nil {
 		return nil, err
 	}

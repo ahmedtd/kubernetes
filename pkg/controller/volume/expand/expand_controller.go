@@ -45,6 +45,7 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/kubernetes/pkg/controller/volume/events"
 	"k8s.io/kubernetes/pkg/features"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/csimigration"
@@ -479,6 +480,10 @@ func (expc *expandController) GetTrustAnchorsBySignerFunc() func(_ string, _ met
 	return func(_ string, _ metav1.LabelSelector) (string, error) {
 		return "", fmt.Errorf("GetTrustAnchorsBySignerFunc unsupported in expandController")
 	}
+}
+
+func (expc *expandController) GetWorkloadCertificateManager() (workloadcertificate.Manager, error) {
+	return nil, fmt.Errorf("GetWorkloadCertificateManager unsupported in expandController")
 }
 
 func (expc *expandController) GetNodeLabels() (map[string]string, error) {

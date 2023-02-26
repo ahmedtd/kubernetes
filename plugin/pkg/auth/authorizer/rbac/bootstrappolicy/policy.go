@@ -184,6 +184,10 @@ func NodeRules() []rbacv1.PolicyRule {
 	if utilfeature.DefaultFeatureGate.Enabled(features.ClusterTrustBundle) {
 		nodePolicyRules = append(nodePolicyRules, rbacv1helpers.NewRule("get", "list", "watch").Groups(certificatesGroup).Resources("clustertrustbundles").RuleOrDie())
 	}
+	// Kubeler needs access to WorkloadCertificates to support the workloadCertificate projected volume source.
+	if utilfeature.DefaultFeatureGate.Enabled(features.WorkloadCertificate) {
+		nodePolicyRules = append(nodePolicyRules, rbacv1helpers.NewRule("get", "list", "watch", "create", "update", "patch", "delete").Groups(certificatesGroup).Resources("workloadcertificates").RuleOrDie())
+	}
 
 	return nodePolicyRules
 }

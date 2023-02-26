@@ -41,6 +41,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
 	csilibplugins "k8s.io/csi-translation-lib/plugins"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	. "k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
@@ -230,11 +231,17 @@ func (f *fakeVolumeHost) DeleteServiceAccountTokenFunc() func(types.UID) {
 }
 
 func (f *fakeVolumeHost) GetTrustAnchorsByNameFunc() func(name string) (string, error) {
-	return func(name string) (string, error) {}
+	return func(name string) (string, error) { return "", fmt.Errorf("unimplemented") }
 }
 
 func (kvh *fakeVolumeHost) GetTrustAnchorsBySignerFunc() func(signerName string, labelSelector metav1.LabelSelector) (string, error) {
-	return func(signerName string, labelSelector metav1.LabelSelector) (string, error) {}
+	return func(signerName string, labelSelector metav1.LabelSelector) (string, error) {
+		return "", fmt.Errorf("unimplemented")
+	}
+}
+
+func (kvh *fakeVolumeHost) GetWorkloadCertificateManager() (workloadcertificate.Manager, error) {
+	return &workloadcertificate.NoopManager{}, nil
 }
 
 func (f *fakeVolumeHost) GetNodeLabels() (map[string]string, error) {

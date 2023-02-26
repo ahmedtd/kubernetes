@@ -56,6 +56,7 @@ import (
 	"k8s.io/kubernetes/pkg/controller/volume/attachdetach/statusupdater"
 	"k8s.io/kubernetes/pkg/controller/volume/attachdetach/util"
 	"k8s.io/kubernetes/pkg/controller/volume/common"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/csi"
@@ -895,6 +896,10 @@ func (adc *attachDetachController) GetTrustAnchorsBySignerFunc() func(_ string, 
 	return func(_ string, _ metav1.LabelSelector) (string, error) {
 		return "", fmt.Errorf("GetTrustAnchorsBySignerFunc unsupported in attachDetachController")
 	}
+}
+
+func (adc *attachDetachController) GetWorkloadCertificateManager() (workloadcertificate.Manager, error) {
+	return nil, fmt.Errorf("GetWorkloadCertificateManager unsupported in attachDetachController")
 }
 
 func (adc *attachDetachController) GetExec(pluginName string) utilexec.Interface {

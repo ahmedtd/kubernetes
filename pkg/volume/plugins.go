@@ -40,6 +40,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
+	"k8s.io/kubernetes/pkg/kubelet/workloadcertificate"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
 	"k8s.io/kubernetes/pkg/volume/util/recyclerclient"
@@ -432,6 +433,9 @@ type VolumeHost interface {
 
 	// Returns a function that returns trust anchors.
 	GetTrustAnchorsBySignerFunc() func(signerName string, labelSelector metav1.LabelSelector) (string, error)
+
+	// Returns a workload certificate manager
+	GetWorkloadCertificateManager() (workloadcertificate.Manager, error)
 
 	// Returns an interface that should be used to execute any utilities in volume plugins
 	GetExec(pluginName string) exec.Interface

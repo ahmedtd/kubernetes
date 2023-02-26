@@ -1209,7 +1209,7 @@ func validateProjectionSources(projection *core.ProjectedVolumeSource, projectio
 			numSources++
 
 			if source.WorkloadCertificate.SignerName == "" {
-				allErrs = append(allErrs, field.Required(projPath.Child("signerName"), "must be a valid object name"))
+				allErrs = append(allErrs, field.Required(projPath.Child("signerName"), "must be a valid signer name"))
 			}
 		}
 		if numSources > 1 {
