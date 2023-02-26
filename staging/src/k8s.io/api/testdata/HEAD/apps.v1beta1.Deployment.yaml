@@ -1122,6 +1122,10 @@ spec:
               audience: audienceValue
               expirationSeconds: 2
               path: pathValue
+            workloadCertificate:
+              certificatePath: certificatePathValue
+              privateKeyPath: privateKeyPathValue
+              signerName: signerNameValue
         quobyte:
           group: groupValue
           readOnly: true

@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// ClusterTrustBundles returns a ClusterTrustBundleInformer.
 	ClusterTrustBundles() ClusterTrustBundleInformer
+	// WorkloadCertificates returns a WorkloadCertificateInformer.
+	WorkloadCertificates() WorkloadCertificateInformer
 }
 
 type version struct {
@@ -42,4 +44,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ClusterTrustBundles returns a ClusterTrustBundleInformer.
 func (v *version) ClusterTrustBundles() ClusterTrustBundleInformer {
 	return &clusterTrustBundleInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// WorkloadCertificates returns a WorkloadCertificateInformer.
+func (v *version) WorkloadCertificates() WorkloadCertificateInformer {
+	return &workloadCertificateInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

@@ -25,9 +25,11 @@ import (
 	unsafe "unsafe"
 
 	v1alpha1 "k8s.io/api/certificates/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	certificates "k8s.io/kubernetes/pkg/apis/certificates"
+	core "k8s.io/kubernetes/pkg/apis/core"
 )
 
 func init() {
@@ -64,6 +66,56 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*certificates.ClusterTrustBundleSpec)(nil), (*v1alpha1.ClusterTrustBundleSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_certificates_ClusterTrustBundleSpec_To_v1alpha1_ClusterTrustBundleSpec(a.(*certificates.ClusterTrustBundleSpec), b.(*v1alpha1.ClusterTrustBundleSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1alpha1.WorkloadCertificate)(nil), (*certificates.WorkloadCertificate)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_WorkloadCertificate_To_certificates_WorkloadCertificate(a.(*v1alpha1.WorkloadCertificate), b.(*certificates.WorkloadCertificate), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*certificates.WorkloadCertificate)(nil), (*v1alpha1.WorkloadCertificate)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_certificates_WorkloadCertificate_To_v1alpha1_WorkloadCertificate(a.(*certificates.WorkloadCertificate), b.(*v1alpha1.WorkloadCertificate), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1alpha1.WorkloadCertificateCondition)(nil), (*certificates.WorkloadCertificateCondition)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_WorkloadCertificateCondition_To_certificates_WorkloadCertificateCondition(a.(*v1alpha1.WorkloadCertificateCondition), b.(*certificates.WorkloadCertificateCondition), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*certificates.WorkloadCertificateCondition)(nil), (*v1alpha1.WorkloadCertificateCondition)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_certificates_WorkloadCertificateCondition_To_v1alpha1_WorkloadCertificateCondition(a.(*certificates.WorkloadCertificateCondition), b.(*v1alpha1.WorkloadCertificateCondition), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1alpha1.WorkloadCertificateList)(nil), (*certificates.WorkloadCertificateList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_WorkloadCertificateList_To_certificates_WorkloadCertificateList(a.(*v1alpha1.WorkloadCertificateList), b.(*certificates.WorkloadCertificateList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*certificates.WorkloadCertificateList)(nil), (*v1alpha1.WorkloadCertificateList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_certificates_WorkloadCertificateList_To_v1alpha1_WorkloadCertificateList(a.(*certificates.WorkloadCertificateList), b.(*v1alpha1.WorkloadCertificateList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1alpha1.WorkloadCertificateSpec)(nil), (*certificates.WorkloadCertificateSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec(a.(*v1alpha1.WorkloadCertificateSpec), b.(*certificates.WorkloadCertificateSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*certificates.WorkloadCertificateSpec)(nil), (*v1alpha1.WorkloadCertificateSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec(a.(*certificates.WorkloadCertificateSpec), b.(*v1alpha1.WorkloadCertificateSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1alpha1.WorkloadCertificateStatus)(nil), (*certificates.WorkloadCertificateStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus(a.(*v1alpha1.WorkloadCertificateStatus), b.(*certificates.WorkloadCertificateStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*certificates.WorkloadCertificateStatus)(nil), (*v1alpha1.WorkloadCertificateStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus(a.(*certificates.WorkloadCertificateStatus), b.(*v1alpha1.WorkloadCertificateStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -138,4 +190,152 @@ func autoConvert_certificates_ClusterTrustBundleSpec_To_v1alpha1_ClusterTrustBun
 // Convert_certificates_ClusterTrustBundleSpec_To_v1alpha1_ClusterTrustBundleSpec is an autogenerated conversion function.
 func Convert_certificates_ClusterTrustBundleSpec_To_v1alpha1_ClusterTrustBundleSpec(in *certificates.ClusterTrustBundleSpec, out *v1alpha1.ClusterTrustBundleSpec, s conversion.Scope) error {
 	return autoConvert_certificates_ClusterTrustBundleSpec_To_v1alpha1_ClusterTrustBundleSpec(in, out, s)
+}
+
+func autoConvert_v1alpha1_WorkloadCertificate_To_certificates_WorkloadCertificate(in *v1alpha1.WorkloadCertificate, out *certificates.WorkloadCertificate, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1alpha1_WorkloadCertificate_To_certificates_WorkloadCertificate is an autogenerated conversion function.
+func Convert_v1alpha1_WorkloadCertificate_To_certificates_WorkloadCertificate(in *v1alpha1.WorkloadCertificate, out *certificates.WorkloadCertificate, s conversion.Scope) error {
+	return autoConvert_v1alpha1_WorkloadCertificate_To_certificates_WorkloadCertificate(in, out, s)
+}
+
+func autoConvert_certificates_WorkloadCertificate_To_v1alpha1_WorkloadCertificate(in *certificates.WorkloadCertificate, out *v1alpha1.WorkloadCertificate, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_certificates_WorkloadCertificate_To_v1alpha1_WorkloadCertificate is an autogenerated conversion function.
+func Convert_certificates_WorkloadCertificate_To_v1alpha1_WorkloadCertificate(in *certificates.WorkloadCertificate, out *v1alpha1.WorkloadCertificate, s conversion.Scope) error {
+	return autoConvert_certificates_WorkloadCertificate_To_v1alpha1_WorkloadCertificate(in, out, s)
+}
+
+func autoConvert_v1alpha1_WorkloadCertificateCondition_To_certificates_WorkloadCertificateCondition(in *v1alpha1.WorkloadCertificateCondition, out *certificates.WorkloadCertificateCondition, s conversion.Scope) error {
+	out.Type = certificates.WorkloadCertificateConditionType(in.Type)
+	out.Status = core.ConditionStatus(in.Status)
+	out.Reason = in.Reason
+	out.Message = in.Message
+	out.ObservedGeneration = in.ObservedGeneration
+	out.LastUpdateTime = in.LastUpdateTime
+	out.LastTransitionTime = in.LastTransitionTime
+	return nil
+}
+
+// Convert_v1alpha1_WorkloadCertificateCondition_To_certificates_WorkloadCertificateCondition is an autogenerated conversion function.
+func Convert_v1alpha1_WorkloadCertificateCondition_To_certificates_WorkloadCertificateCondition(in *v1alpha1.WorkloadCertificateCondition, out *certificates.WorkloadCertificateCondition, s conversion.Scope) error {
+	return autoConvert_v1alpha1_WorkloadCertificateCondition_To_certificates_WorkloadCertificateCondition(in, out, s)
+}
+
+func autoConvert_certificates_WorkloadCertificateCondition_To_v1alpha1_WorkloadCertificateCondition(in *certificates.WorkloadCertificateCondition, out *v1alpha1.WorkloadCertificateCondition, s conversion.Scope) error {
+	out.Type = v1alpha1.WorkloadCertificateConditionType(in.Type)
+	out.Status = v1.ConditionStatus(in.Status)
+	out.Reason = in.Reason
+	out.Message = in.Message
+	out.ObservedGeneration = in.ObservedGeneration
+	out.LastUpdateTime = in.LastUpdateTime
+	out.LastTransitionTime = in.LastTransitionTime
+	return nil
+}
+
+// Convert_certificates_WorkloadCertificateCondition_To_v1alpha1_WorkloadCertificateCondition is an autogenerated conversion function.
+func Convert_certificates_WorkloadCertificateCondition_To_v1alpha1_WorkloadCertificateCondition(in *certificates.WorkloadCertificateCondition, out *v1alpha1.WorkloadCertificateCondition, s conversion.Scope) error {
+	return autoConvert_certificates_WorkloadCertificateCondition_To_v1alpha1_WorkloadCertificateCondition(in, out, s)
+}
+
+func autoConvert_v1alpha1_WorkloadCertificateList_To_certificates_WorkloadCertificateList(in *v1alpha1.WorkloadCertificateList, out *certificates.WorkloadCertificateList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]certificates.WorkloadCertificate)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha1_WorkloadCertificateList_To_certificates_WorkloadCertificateList is an autogenerated conversion function.
+func Convert_v1alpha1_WorkloadCertificateList_To_certificates_WorkloadCertificateList(in *v1alpha1.WorkloadCertificateList, out *certificates.WorkloadCertificateList, s conversion.Scope) error {
+	return autoConvert_v1alpha1_WorkloadCertificateList_To_certificates_WorkloadCertificateList(in, out, s)
+}
+
+func autoConvert_certificates_WorkloadCertificateList_To_v1alpha1_WorkloadCertificateList(in *certificates.WorkloadCertificateList, out *v1alpha1.WorkloadCertificateList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]v1alpha1.WorkloadCertificate)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_certificates_WorkloadCertificateList_To_v1alpha1_WorkloadCertificateList is an autogenerated conversion function.
+func Convert_certificates_WorkloadCertificateList_To_v1alpha1_WorkloadCertificateList(in *certificates.WorkloadCertificateList, out *v1alpha1.WorkloadCertificateList, s conversion.Scope) error {
+	return autoConvert_certificates_WorkloadCertificateList_To_v1alpha1_WorkloadCertificateList(in, out, s)
+}
+
+func autoConvert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec(in *v1alpha1.WorkloadCertificateSpec, out *certificates.WorkloadCertificateSpec, s conversion.Scope) error {
+	out.SignerName = in.SignerName
+	out.ServiceAccount = in.ServiceAccount
+	out.Pod = in.Pod
+	out.PodUID = in.PodUID
+	out.Node = in.Node
+	out.Requester = in.Requester
+	out.PublicKey = in.PublicKey
+	return nil
+}
+
+// Convert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec is an autogenerated conversion function.
+func Convert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec(in *v1alpha1.WorkloadCertificateSpec, out *certificates.WorkloadCertificateSpec, s conversion.Scope) error {
+	return autoConvert_v1alpha1_WorkloadCertificateSpec_To_certificates_WorkloadCertificateSpec(in, out, s)
+}
+
+func autoConvert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec(in *certificates.WorkloadCertificateSpec, out *v1alpha1.WorkloadCertificateSpec, s conversion.Scope) error {
+	out.SignerName = in.SignerName
+	out.ServiceAccount = in.ServiceAccount
+	out.Pod = in.Pod
+	out.PodUID = in.PodUID
+	out.Node = in.Node
+	out.Requester = in.Requester
+	out.PublicKey = in.PublicKey
+	return nil
+}
+
+// Convert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec is an autogenerated conversion function.
+func Convert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec(in *certificates.WorkloadCertificateSpec, out *v1alpha1.WorkloadCertificateSpec, s conversion.Scope) error {
+	return autoConvert_certificates_WorkloadCertificateSpec_To_v1alpha1_WorkloadCertificateSpec(in, out, s)
+}
+
+func autoConvert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus(in *v1alpha1.WorkloadCertificateStatus, out *certificates.WorkloadCertificateStatus, s conversion.Scope) error {
+	out.Conditions = *(*[]certificates.WorkloadCertificateCondition)(unsafe.Pointer(&in.Conditions))
+	out.Certificate = in.Certificate
+	out.CertificateObservedGeneration = in.CertificateObservedGeneration
+	out.NotBefore = in.NotBefore
+	out.NotAfter = in.NotAfter
+	out.BeginRefreshAt = in.BeginRefreshAt
+	return nil
+}
+
+// Convert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus is an autogenerated conversion function.
+func Convert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus(in *v1alpha1.WorkloadCertificateStatus, out *certificates.WorkloadCertificateStatus, s conversion.Scope) error {
+	return autoConvert_v1alpha1_WorkloadCertificateStatus_To_certificates_WorkloadCertificateStatus(in, out, s)
+}
+
+func autoConvert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus(in *certificates.WorkloadCertificateStatus, out *v1alpha1.WorkloadCertificateStatus, s conversion.Scope) error {
+	out.Conditions = *(*[]v1alpha1.WorkloadCertificateCondition)(unsafe.Pointer(&in.Conditions))
+	out.Certificate = in.Certificate
+	out.CertificateObservedGeneration = in.CertificateObservedGeneration
+	out.NotBefore = in.NotBefore
+	out.NotAfter = in.NotAfter
+	out.BeginRefreshAt = in.BeginRefreshAt
+	return nil
+}
+
+// Convert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus is an autogenerated conversion function.
+func Convert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus(in *certificates.WorkloadCertificateStatus, out *v1alpha1.WorkloadCertificateStatus, s conversion.Scope) error {
+	return autoConvert_certificates_WorkloadCertificateStatus_To_v1alpha1_WorkloadCertificateStatus(in, out, s)
 }

@@ -384,6 +384,11 @@
                       ]
                     },
                     "path": "pathValue"
+                  },
+                  "workloadCertificate": {
+                    "signerName": "signerNameValue",
+                    "privateKeyPath": "privateKeyPathValue",
+                    "certificatePath": "certificatePathValue"
                   }
                 }
               ],

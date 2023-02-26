@@ -21,3 +21,11 @@ package v1alpha1
 // ClusterTrustBundleListerExpansion allows custom methods to be added to
 // ClusterTrustBundleLister.
 type ClusterTrustBundleListerExpansion interface{}
+
+// WorkloadCertificateListerExpansion allows custom methods to be added to
+// WorkloadCertificateLister.
+type WorkloadCertificateListerExpansion interface{}
+
+// WorkloadCertificateNamespaceListerExpansion allows custom methods to be added to
+// WorkloadCertificateNamespaceLister.
+type WorkloadCertificateNamespaceListerExpansion interface{}

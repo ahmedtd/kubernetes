@@ -529,6 +529,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &applyconfigurationscertificatesv1alpha1.ClusterTrustBundleApplyConfiguration{}
 	case certificatesv1alpha1.SchemeGroupVersion.WithKind("ClusterTrustBundleSpec"):
 		return &applyconfigurationscertificatesv1alpha1.ClusterTrustBundleSpecApplyConfiguration{}
+	case certificatesv1alpha1.SchemeGroupVersion.WithKind("WorkloadCertificate"):
+		return &applyconfigurationscertificatesv1alpha1.WorkloadCertificateApplyConfiguration{}
+	case certificatesv1alpha1.SchemeGroupVersion.WithKind("WorkloadCertificateCondition"):
+		return &applyconfigurationscertificatesv1alpha1.WorkloadCertificateConditionApplyConfiguration{}
+	case certificatesv1alpha1.SchemeGroupVersion.WithKind("WorkloadCertificateSpec"):
+		return &applyconfigurationscertificatesv1alpha1.WorkloadCertificateSpecApplyConfiguration{}
+	case certificatesv1alpha1.SchemeGroupVersion.WithKind("WorkloadCertificateStatus"):
+		return &applyconfigurationscertificatesv1alpha1.WorkloadCertificateStatusApplyConfiguration{}
 
 		// Group=certificates.k8s.io, Version=v1beta1
 	case certificatesv1beta1.SchemeGroupVersion.WithKind("CertificateSigningRequest"):
@@ -921,6 +929,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &applyconfigurationscorev1.WeightedPodAffinityTermApplyConfiguration{}
 	case corev1.SchemeGroupVersion.WithKind("WindowsSecurityContextOptions"):
 		return &applyconfigurationscorev1.WindowsSecurityContextOptionsApplyConfiguration{}
+	case corev1.SchemeGroupVersion.WithKind("WorkloadCertificateProjection"):
+		return &applyconfigurationscorev1.WorkloadCertificateProjectionApplyConfiguration{}
 
 		// Group=discovery.k8s.io, Version=v1
 	case discoveryv1.SchemeGroupVersion.WithKind("Endpoint"):

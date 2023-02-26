@@ -4181,6 +4181,14 @@
               }
             ],
             "description": "serviceAccountToken is information about the serviceAccountToken data to project"
+          },
+          "workloadCertificate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.api.core.v1.WorkloadCertificateProjection"
+              }
+            ],
+            "description": "workloadCertificate projects an auto-rotating key and certificate (issed by the named signer)."
           }
         },
         "type": "object"
@@ -4256,6 +4264,32 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "io.k8s.api.core.v1.WorkloadCertificateProjection": {
+        "description": "WorkloadCertificateProjection gives a pod an auto-rotating key and certificate issued by a given signer.",
+        "properties": {
+          "certificatePath": {
+            "default": "",
+            "description": "Write the certificate chain at this relative path from the volume root.",
+            "type": "string"
+          },
+          "privateKeyPath": {
+            "default": "",
+            "description": "Write the private key at this relative path from the volume root.",
+            "type": "string"
+          },
+          "signerName": {
+            "default": "",
+            "description": "The signer to request the certificate from.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signerName",
+          "privateKeyPath",
+          "certificatePath"
+        ],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.api.resource.Quantity": {

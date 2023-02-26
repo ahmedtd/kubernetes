@@ -1,0 +1,56 @@
+apiVersion: certificates.k8s.io/v1alpha1
+kind: WorkloadCertificate
+metadata:
+  annotations:
+    annotationsKey: annotationsValue
+  creationTimestamp: "2008-01-01T01:01:01Z"
+  deletionGracePeriodSeconds: 10
+  deletionTimestamp: "2009-01-01T01:01:01Z"
+  finalizers:
+  - finalizersValue
+  generateName: generateNameValue
+  generation: 7
+  labels:
+    labelsKey: labelsValue
+  managedFields:
+  - apiVersion: apiVersionValue
+    fieldsType: fieldsTypeValue
+    fieldsV1: {}
+    manager: managerValue
+    operation: operationValue
+    subresource: subresourceValue
+    time: "2004-01-01T01:01:01Z"
+  name: nameValue
+  namespace: namespaceValue
+  ownerReferences:
+  - apiVersion: apiVersionValue
+    blockOwnerDeletion: true
+    controller: true
+    kind: kindValue
+    name: nameValue
+    uid: uidValue
+  resourceVersion: resourceVersionValue
+  selfLink: selfLinkValue
+  uid: uidValue
+spec:
+  node: nodeValue
+  pod: podValue
+  podUID: podUIDValue
+  publicKey: publicKeyValue
+  requester: requesterValue
+  serviceAccount: serviceAccountValue
+  signerName: signerNameValue
+status:
+  beginRefreshAt: "2006-01-01T01:01:01Z"
+  certificate: certificateValue
+  certificateObservedGeneration: 3
+  conditions:
+  - lastTransitionTime: "2007-01-01T01:01:01Z"
+    lastUpdateTime: "2006-01-01T01:01:01Z"
+    message: messageValue
+    observedGeneration: 5
+    reason: reasonValue
+    status: statusValue
+    type: typeValue
+  notAfter: "2005-01-01T01:01:01Z"
+  notBefore: "2004-01-01T01:01:01Z"

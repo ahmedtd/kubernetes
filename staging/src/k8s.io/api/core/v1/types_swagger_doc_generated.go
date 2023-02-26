@@ -2555,6 +2555,7 @@ var map_VolumeProjection = map[string]string{
 	"configMap":           "configMap information about the configMap data to project",
 	"serviceAccountToken": "serviceAccountToken is information about the serviceAccountToken data to project",
 	"clusterTrustBundle":  "ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of a ClusterTrustBundle object in an auto-updating file.\n\nAlpha, gated by the ClusterTrustBundleProjection feature gate.\n\nClusterTrustBundle objects can either be selected by name, or by the combination of signer name and a label selector.\n\nWhen selecting by name, the referenced ClusterTrustBundle object must have an empty spec.signerName field.\n\nWhen selecting by signer name, the contents of all ClusterTrustBundle objects associated with the signer and matching the label will be unified and deduplicated.\n\nKubelet performs aggressive normalization of the PEM contents written into the pod filesystem.  Esoteric PEM features such as inter-block comments and block headers are stripped.  Certificates are deduplicated. The ordering of certificates within the file is arbitrary, and Kubelet may change the order over time.",
+	"workloadCertificate": "workloadCertificate projects an auto-rotating key and certificate (issed by the named signer).",
 }
 
 func (VolumeProjection) SwaggerDoc() map[string]string {
@@ -2630,6 +2631,17 @@ var map_WindowsSecurityContextOptions = map[string]string{
 
 func (WindowsSecurityContextOptions) SwaggerDoc() map[string]string {
 	return map_WindowsSecurityContextOptions
+}
+
+var map_WorkloadCertificateProjection = map[string]string{
+	"":                "WorkloadCertificateProjection gives a pod an auto-rotating key and certificate issued by a given signer.",
+	"signerName":      "The signer to request the certificate from.",
+	"privateKeyPath":  "Write the private key at this relative path from the volume root.",
+	"certificatePath": "Write the certificate chain at this relative path from the volume root.",
+}
+
+func (WorkloadCertificateProjection) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificateProjection
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

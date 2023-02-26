@@ -5883,6 +5883,10 @@ message VolumeProjection {
   //
   // +optional
   optional ClusterTrustBundleProjection clusterTrustBundle = 5;
+
+  // workloadCertificate projects an auto-rotating key and certificate (issed by the named signer).
+  // +optional
+  optional WorkloadCertificateProjection workloadCertificate = 6;
 }
 
 // Represents the source of a volume to mount.
@@ -6110,5 +6114,18 @@ message WindowsSecurityContextOptions {
   // then HostNetwork must also be set to true.
   // +optional
   optional bool hostProcess = 4;
+}
+
+// WorkloadCertificateProjection gives a pod an auto-rotating key and
+// certificate issued by a given signer.
+message WorkloadCertificateProjection {
+  // The signer to request the certificate from.
+  optional string signerName = 1;
+
+  // Write the private key at this relative path from the volume root.
+  optional string privateKeyPath = 2;
+
+  // Write the certificate chain at this relative path from the volume root.
+  optional string certificatePath = 3;
 }
 

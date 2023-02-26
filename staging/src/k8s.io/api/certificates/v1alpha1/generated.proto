@@ -21,6 +21,7 @@ syntax = "proto2";
 
 package k8s.io.api.certificates.v1alpha1;
 
+import "k8s.io/api/core/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
@@ -99,5 +100,116 @@ message ClusterTrustBundleSpec {
   // deduplicate certificate blocks in this file according to their own logic,
   // as well as to drop PEM block headers and inter-block data.
   optional string trustBundle = 2;
+}
+
+message WorkloadCertificate {
+  // metadata contains the object metadata.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // spec contains the desired signer, and the requesting workload and node identity.
+  optional WorkloadCertificateSpec spec = 2;
+
+  // status contains the conditions and the issued certificate.
+  // +optional
+  optional WorkloadCertificateStatus status = 3;
+}
+
+// WorkloadCertificateCondition describes a condition of a CertificateSigningRequest object
+message WorkloadCertificateCondition {
+  optional string type = 1;
+
+  // status of the condition, one of True, False, Unknown.
+  optional string status = 2;
+
+  // reason indicates a brief reason for the request state
+  // +optional
+  optional string reason = 3;
+
+  // message contains a human readable message with details about the request state
+  // +optional
+  optional string message = 4;
+
+  // observedGeneration is the generation of the object at which this condition was recorded.
+  optional int64 observedGeneration = 5;
+
+  // lastUpdateTime is the time of the last update to this condition
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastUpdateTime = 6;
+
+  // lastTransitionTime is the time the condition last transitioned from one status to another.
+  // If unset, when a new condition type is added or an existing condition's status is changed,
+  // the server defaults this to the current time.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 7;
+}
+
+message WorkloadCertificateList {
+  // metadata contains the list metadata.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // items is a collection of WorkloadCertificate objects
+  repeated WorkloadCertificate items = 2;
+}
+
+message WorkloadCertificateSpec {
+  // signerName is the signer that should handle this request.
+  //
+  // Immutable after creation.
+  optional string signerName = 1;
+
+  // serviceAccount is the name of the service account of the pod being asserted.
+  //
+  // Immutable after creation.
+  optional string serviceAccount = 2;
+
+  // pod is the name of the pod being asserted.
+  //
+  // Immutable after creation.
+  optional string pod = 4;
+
+  // podUID is the UID of the pod being asserted.
+  //
+  // Immutable after creation.
+  optional string podUID = 5;
+
+  // node is the node on which the pod being asserted is running.
+  //
+  // Immutable after creation.
+  optional string node = 6;
+
+  // requester is the identity of the certificate requester (typically either the node identity, or the service account of a daemonset).
+  //
+  // Immutable after creation.
+  optional string requester = 7;
+
+  // PublicKey is the PEM-formatted public key.
+  // +optional
+  optional string publicKey = 8;
+}
+
+message WorkloadCertificateStatus {
+  // conditions applied to the request. Known conditions are "Denied" and "Pending".
+  // +listType=map
+  // +listMapKey=type
+  // +optional
+  repeated WorkloadCertificateCondition conditions = 1;
+
+  // +listType=atomic
+  // +optional
+  optional string certificate = 2;
+
+  // +optional
+  optional int64 certificateObservedGeneration = 3;
+
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time notBefore = 4;
+
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time notAfter = 5;
+
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time beginRefreshAt = 6;
 }
 

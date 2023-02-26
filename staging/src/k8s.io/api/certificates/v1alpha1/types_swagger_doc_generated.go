@@ -57,4 +57,59 @@ func (ClusterTrustBundleSpec) SwaggerDoc() map[string]string {
 	return map_ClusterTrustBundleSpec
 }
 
+var map_WorkloadCertificate = map[string]string{
+	"metadata": "metadata contains the object metadata.",
+	"spec":     "spec contains the desired signer, and the requesting workload and node identity.",
+	"status":   "status contains the conditions and the issued certificate.",
+}
+
+func (WorkloadCertificate) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificate
+}
+
+var map_WorkloadCertificateCondition = map[string]string{
+	"":                   "WorkloadCertificateCondition describes a condition of a CertificateSigningRequest object",
+	"status":             "status of the condition, one of True, False, Unknown.",
+	"reason":             "reason indicates a brief reason for the request state",
+	"message":            "message contains a human readable message with details about the request state",
+	"observedGeneration": "observedGeneration is the generation of the object at which this condition was recorded.",
+	"lastUpdateTime":     "lastUpdateTime is the time of the last update to this condition",
+	"lastTransitionTime": "lastTransitionTime is the time the condition last transitioned from one status to another. If unset, when a new condition type is added or an existing condition's status is changed, the server defaults this to the current time.",
+}
+
+func (WorkloadCertificateCondition) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificateCondition
+}
+
+var map_WorkloadCertificateList = map[string]string{
+	"metadata": "metadata contains the list metadata.",
+	"items":    "items is a collection of WorkloadCertificate objects",
+}
+
+func (WorkloadCertificateList) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificateList
+}
+
+var map_WorkloadCertificateSpec = map[string]string{
+	"signerName":     "signerName is the signer that should handle this request.\n\nImmutable after creation.",
+	"serviceAccount": "serviceAccount is the name of the service account of the pod being asserted.\n\nImmutable after creation.",
+	"pod":            "pod is the name of the pod being asserted.\n\nImmutable after creation.",
+	"podUID":         "podUID is the UID of the pod being asserted.\n\nImmutable after creation.",
+	"node":           "node is the node on which the pod being asserted is running.\n\nImmutable after creation.",
+	"requester":      "requester is the identity of the certificate requester (typically either the node identity, or the service account of a daemonset).\n\nImmutable after creation.",
+	"publicKey":      "PublicKey is the PEM-formatted public key.",
+}
+
+func (WorkloadCertificateSpec) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificateSpec
+}
+
+var map_WorkloadCertificateStatus = map[string]string{
+	"conditions": "conditions applied to the request. Known conditions are \"Denied\" and \"Pending\".",
+}
+
+func (WorkloadCertificateStatus) SwaggerDoc() map[string]string {
+	return map_WorkloadCertificateStatus
+}
+
 // AUTO-GENERATED FUNCTIONS END HERE

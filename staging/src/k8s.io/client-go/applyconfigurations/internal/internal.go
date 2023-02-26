@@ -3669,6 +3669,115 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         scalar: string
       default: ""
+- name: io.k8s.api.certificates.v1alpha1.WorkloadCertificate
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+      default: {}
+    - name: spec
+      type:
+        namedType: io.k8s.api.certificates.v1alpha1.WorkloadCertificateSpec
+      default: {}
+    - name: status
+      type:
+        namedType: io.k8s.api.certificates.v1alpha1.WorkloadCertificateStatus
+      default: {}
+- name: io.k8s.api.certificates.v1alpha1.WorkloadCertificateCondition
+  map:
+    fields:
+    - name: lastTransitionTime
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+      default: {}
+    - name: lastUpdateTime
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+      default: {}
+    - name: message
+      type:
+        scalar: string
+    - name: observedGeneration
+      type:
+        scalar: numeric
+    - name: reason
+      type:
+        scalar: string
+    - name: status
+      type:
+        scalar: string
+      default: ""
+    - name: type
+      type:
+        scalar: string
+      default: ""
+- name: io.k8s.api.certificates.v1alpha1.WorkloadCertificateSpec
+  map:
+    fields:
+    - name: node
+      type:
+        scalar: string
+      default: ""
+    - name: pod
+      type:
+        scalar: string
+      default: ""
+    - name: podUID
+      type:
+        scalar: string
+      default: ""
+    - name: publicKey
+      type:
+        scalar: string
+      default: ""
+    - name: requester
+      type:
+        scalar: string
+      default: ""
+    - name: serviceAccount
+      type:
+        scalar: string
+      default: ""
+    - name: signerName
+      type:
+        scalar: string
+      default: ""
+- name: io.k8s.api.certificates.v1alpha1.WorkloadCertificateStatus
+  map:
+    fields:
+    - name: beginRefreshAt
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+      default: {}
+    - name: certificate
+      type:
+        scalar: string
+    - name: certificateObservedGeneration
+      type:
+        scalar: numeric
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.certificates.v1alpha1.WorkloadCertificateCondition
+          elementRelationship: associative
+          keys:
+          - type
+    - name: notAfter
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+      default: {}
+    - name: notBefore
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+      default: {}
 - name: io.k8s.api.certificates.v1beta1.CertificateSigningRequest
   map:
     fields:
@@ -7562,6 +7671,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: serviceAccountToken
       type:
         namedType: io.k8s.api.core.v1.ServiceAccountTokenProjection
+    - name: workloadCertificate
+      type:
+        namedType: io.k8s.api.core.v1.WorkloadCertificateProjection
 - name: io.k8s.api.core.v1.VsphereVirtualDiskVolumeSource
   map:
     fields:
@@ -7604,6 +7716,21 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: runAsUserName
       type:
         scalar: string
+- name: io.k8s.api.core.v1.WorkloadCertificateProjection
+  map:
+    fields:
+    - name: certificatePath
+      type:
+        scalar: string
+      default: ""
+    - name: privateKeyPath
+      type:
+        scalar: string
+      default: ""
+    - name: signerName
+      type:
+        scalar: string
+      default: ""
 - name: io.k8s.api.discovery.v1.Endpoint
   map:
     fields:
