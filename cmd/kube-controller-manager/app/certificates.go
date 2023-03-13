@@ -23,6 +23,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apiserver/pkg/server/dynamiccertificates"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/controller-manager/controller"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/controller/certificates/approver"
@@ -30,6 +32,8 @@ import (
 	"k8s.io/kubernetes/pkg/controller/certificates/rootcacertpublisher"
 	"k8s.io/kubernetes/pkg/controller/certificates/signer"
 	csrsigningconfig "k8s.io/kubernetes/pkg/controller/certificates/signer/config"
+	"k8s.io/kubernetes/pkg/controller/certificates/workloadcertificatesigner"
+	"k8s.io/kubernetes/pkg/features"
 )
 
 func startCSRSigningController(ctx context.Context, controllerContext ControllerContext) (controller.Interface, bool, error) {
@@ -73,6 +77,27 @@ func startCSRSigningController(ctx context.Context, controllerContext Controller
 			return nil, false, fmt.Errorf("failed to start kubernetes.io/kube-apiserver-client certificate controller: %v", err)
 		}
 		go kubeAPIServerClientSigner.Run(ctx, 5)
+
+		// TODO(KEP-WorkloadCertiificates): The default workload certificate
+		// signer should use a different root certificate, and be launched
+		// independently of the kube-apiserver signer.
+		if utilfeature.DefaultFeatureGate.Enabled(features.WorkloadCertificate) {
+			apiClientKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("csr-controller", kubeAPIServerSignerCertFile, kubeAPIServerSignerKeyFile)
+			if err != nil {
+				return nil, false, fmt.Errorf("while reading apiserver client root certificate and key: %w", err)
+			}
+
+			defaultWorkloadCertificateKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("csr-controller", kubeAPIServerSignerCertFile, kubeAPIServerSignerKeyFile)
+			if err != nil {
+				return nil, false, fmt.Errorf("while reading default workload certificate root certificate and key: %w", err)
+			}
+
+			wcInformer := controllerContext.InformerFactory.Certificates().V1alpha1().WorkloadCertificates()
+			wcSigner := workloadcertificatesigner.New(c, wcInformer, apiClientKeyPair, defaultWorkloadCertificateKeyPair)
+			go apiClientKeyPair.Run(ctx, 1)
+			go defaultWorkloadCertificateKeyPair.Run(ctx, 1)
+			go wcSigner.Run(ctx, 5)
+		}
 	} else {
 		logger.Info("Skipping CSR signer controller because specific files were specified for other signers and not this one", "controller", "kubernetes.io/kube-apiserver-client")
 	}
