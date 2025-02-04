@@ -90,8 +90,11 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 		return tokenReview, nil
 	}
 
+	fakeReq := &http.Request{}
+	fakeReq = fakeReq.WithContext(ctx)
+
 	// create a header that contains nothing but the token
-	fakeReq := &http.Request{Header: http.Header{}}
+	fakeReq.Header = http.Header{}
 	fakeReq.Header.Add("Authorization", "Bearer "+tokenReview.Spec.Token)
 
 	auds := tokenReview.Spec.Audiences
