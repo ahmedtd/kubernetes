@@ -1,0 +1,4 @@
+# HELP kubelet_podcertificate_states [BETA] Gauge vector reporting the number of pod certificate projected volume sources, faceted by signer_name and state.
+# TYPE kubelet_podcertificate_states gauge
+kubelet_podcertificate_states{signer_name="test.io/bar",state="overdue_for_refresh"} 1
+kubelet_podcertificate_states{signer_name="test.io/foo",state="expired"} 1
