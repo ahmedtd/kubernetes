@@ -961,6 +961,8 @@ func NewMainKubelet(ctx context.Context,
 		klet.podCertificateManager = podCertificateManager
 		kubeInformers.Start(ctx.Done())
 		go podCertificateManager.Run(ctx)
+
+		metrics.RegisterCollectors(collectors.PodCertificateCollectorFor(podCertificateManager))
 	} else {
 		klet.podCertificateManager = &podcertificate.NoOpManager{}
 		klog.InfoS("Not starting PodCertificateRequest manager because we are in static kubelet mode or the PodCertificateProjection feature gate is disabled")

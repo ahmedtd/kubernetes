@@ -1193,18 +1193,6 @@ var (
 		},
 		[]string{"retry_trigger"},
 	)
-
-	// A gauge vector reporting the current number of pod certificate projected volume
-	// sources being maintained by this kubelet instance.
-	PodCertificateStates = metrics.NewGaugeVec(
-		&metrics.GaugeOpts{
-			Subsystem:      KubeletSubsystem,
-			Name:           PodCertificateStatesKey,
-			Help:           "Gauge vector reporting the number of pod certificate projected volume sources, faceted by signer_name and state.",
-			StabilityLevel: metrics.BETA,
-		},
-		[]string{"signer_name", "state"},
-	)
 )
 
 var registerMetrics sync.Once
@@ -1322,10 +1310,6 @@ func Register() {
 			legacyregistry.MustRegister(PodInfeasibleResizes)
 			legacyregistry.MustRegister(PodInProgressResizes)
 			legacyregistry.MustRegister(PodDeferredAcceptedResizes)
-		}
-
-		if utilfeature.DefaultFeatureGate.Enabled(features.PodCertificateRequest) {
-			legacyregistry.MustRegister(PodCertificateStates)
 		}
 	})
 }

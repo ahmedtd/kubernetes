@@ -49,7 +49,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/kubelet/metrics"
 	"k8s.io/utils/clock"
 )
 
@@ -70,6 +69,17 @@ type Manager interface {
 	// GetPodCertificateCredentialBundle is called by the volume host to
 	// retrieve the credential bundle for a given pod certificate volume.
 	GetPodCertificateCredentialBundle(ctx context.Context, namespace, podName, podUID, volumeName string, sourceIndex int) (privKey []byte, certChain []byte, err error)
+
+	MetricReport() *MetricReport
+}
+
+type MetricReport struct {
+	PodCertificateStates map[SignerAndState]int
+}
+
+type SignerAndState struct {
+	SignerName string
+	State      string
 }
 
 // After this amount of time (plus jitter), we can assume that a PCR that we
@@ -144,6 +154,7 @@ type projectionRecord struct {
 // Interface type for all projection record states.
 type credState interface {
 	getCredBundle() (privKey, certChain []byte, err error)
+	metricsState(now time.Time) string
 }
 
 type credStateInitial struct {
@@ -151,6 +162,10 @@ type credStateInitial struct {
 
 func (c *credStateInitial) getCredBundle() ([]byte, []byte, error) {
 	return nil, nil, fmt.Errorf("credential bundle is not issued yet")
+}
+
+func (c *credStateInitial) metricsState(_ time.Time) string {
+	return "not_yet_issued"
 }
 
 type credStateWait struct {
@@ -165,6 +180,10 @@ func (c *credStateWait) getCredBundle() ([]byte, []byte, error) {
 	return nil, nil, fmt.Errorf("credential bundle is not issued yet")
 }
 
+func (c *credStateWait) metricsState(_ time.Time) string {
+	return "not_yet_issued"
+}
+
 type credStateDenied struct {
 	Reason  string
 	Message string
@@ -172,6 +191,10 @@ type credStateDenied struct {
 
 func (c *credStateDenied) getCredBundle() ([]byte, []byte, error) {
 	return nil, nil, fmt.Errorf("PodCertificateRequest was permanently denied: reason=%q message=%q", c.Reason, c.Message)
+}
+
+func (c *credStateDenied) metricsState(_ time.Time) string {
+	return "denied"
 }
 
 type credStateFailed struct {
@@ -183,26 +206,40 @@ func (c *credStateFailed) getCredBundle() ([]byte, []byte, error) {
 	return nil, nil, fmt.Errorf("PodCertificateRequest was permanently failed: reason=%q message=%q", c.Reason, c.Message)
 }
 
+func (c *credStateFailed) metricsState(_ time.Time) string {
+	return "failed"
+}
+
 type credStateFresh struct {
-	privateKey        []byte
-	certChain         []byte
-	beginRefreshAt    time.Time
-	notAfter          time.Time
-	overdueForRefresh bool
-	expired           bool
+	privateKey                       []byte
+	certChain                        []byte
+	beginRefreshAt                   time.Time
+	notAfter                         time.Time
+	eventEmittedForOverdueForRefresh bool
+	eventEmittedForExpiration        bool
 }
 
 func (c *credStateFresh) getCredBundle() ([]byte, []byte, error) {
 	return c.privateKey, c.certChain, nil
 }
 
+func (c *credStateFresh) metricsState(now time.Time) string {
+	if now.After(c.notAfter) {
+		return "expired"
+	}
+	if now.After(c.beginRefreshAt.Add(refreshOverdueDuration)) {
+		return "overdue_for_refresh"
+	}
+	return "fresh"
+}
+
 type credStateWaitRefresh struct {
-	privateKey        []byte
-	certChain         []byte
-	beginRefreshAt    time.Time
-	notAfter          time.Time
-	overdueForRefresh bool
-	expired           bool
+	privateKey                       []byte
+	certChain                        []byte
+	beginRefreshAt                   time.Time
+	notAfter                         time.Time
+	eventEmittedForOverdueForRefresh bool
+	eventEmittedForExpiration        bool
 
 	refreshPrivateKey []byte
 	refreshPCRName    string
@@ -213,6 +250,16 @@ type credStateWaitRefresh struct {
 
 func (c *credStateWaitRefresh) getCredBundle() ([]byte, []byte, error) {
 	return c.privateKey, c.certChain, nil
+}
+
+func (c *credStateWaitRefresh) metricsState(now time.Time) string {
+	if now.After(c.notAfter) {
+		return "expired"
+	}
+	if now.After(c.beginRefreshAt.Add(refreshOverdueDuration)) {
+		return "overdue_for_refresh"
+	}
+	return "fresh"
 }
 
 var _ Manager = (*IssuingManager)(nil)
@@ -291,8 +338,6 @@ func (m *IssuingManager) Run(ctx context.Context) {
 	if !cache.WaitForCacheSync(ctx.Done(), m.pcrInformer.HasSynced, m.nodeInformer.HasSynced) {
 		return
 	}
-	// Reset the PodCertificateStates gauge metric.
-	metrics.PodCertificateStates.Reset()
 
 	go wait.JitterUntilWithContext(ctx, m.runRefreshPass, 1*time.Minute, 1.0, false)
 	go wait.UntilWithContext(ctx, m.runProjectionProcessor, time.Second)
@@ -448,7 +493,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 					Message: cond.Message,
 				}
 				klog.V(4).InfoS("PodCertificateRequest denied, moving to credStateDenied", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "denied").Inc()
 				m.recorder.Eventf(pod, corev1.EventTypeWarning, certificatesv1beta1.PodCertificateRequestConditionTypeDenied, cond.Reason)
 				return nil
 			case certificatesv1beta1.PodCertificateRequestConditionTypeFailed:
@@ -457,7 +501,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 					Message: cond.Message,
 				}
 				klog.V(4).InfoS("PodCertificateRequest denied, moving to credStateFailed", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "failed").Inc()
 				m.recorder.Eventf(pod, corev1.EventTypeWarning, certificatesv1beta1.PodCertificateRequestConditionTypeFailed, cond.Reason)
 				return nil
 			case certificatesv1beta1.PodCertificateRequestConditionTypeIssued:
@@ -468,7 +511,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 					notAfter:       pcr.Status.NotAfter.Time,
 				}
 				klog.V(4).InfoS("PodCertificateRequest issued, moving to credStateFresh", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "fresh").Inc()
 				return nil
 			}
 		}
@@ -501,21 +543,17 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 		klog.V(4).InfoS("Time to refresh", "key", key)
 
 		// The current time is more than 10 minutes past the most recently issued certificate's `beginRefreshAt` timestamp but the state has not been labeled with overdue for refresh.
-		if m.clock.Now().After(state.beginRefreshAt.Add(refreshOverdueDuration)) && !state.overdueForRefresh {
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "overdue_for_refresh").Inc()
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "fresh").Dec()
+		if m.clock.Now().After(state.beginRefreshAt.Add(refreshOverdueDuration)) && !state.eventEmittedForOverdueForRefresh {
 			klog.V(4).InfoS("Refresh overdue", "key", key)
 			m.recorder.Eventf(pod, corev1.EventTypeWarning, "CertificateOverdueForRefresh", "PodCertificate refresh overdue")
-			state.overdueForRefresh = true
+			state.eventEmittedForOverdueForRefresh = true
 		}
 
 		// The current time is past the most recently issued certificate's `notAfter` timestamp but the state has not been labelled with expired.
-		if m.clock.Now().After(state.notAfter) && !state.expired {
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "overdue_for_refresh").Dec()
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "expired").Inc()
+		if m.clock.Now().After(state.notAfter) && !state.eventEmittedForExpiration {
 			klog.V(4).InfoS("Certificates expired", "key", key)
 			m.recorder.Eventf(pod, corev1.EventTypeWarning, "CertificateExpired", "PodCertificate expired")
-			state.expired = true
+			state.eventEmittedForExpiration = true
 		}
 
 		// We fetch the service account so we can know its UID.  Ideally, Kubelet
@@ -544,12 +582,12 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 		}
 
 		rec.curState = &credStateWaitRefresh{
-			privateKey:        state.privateKey,
-			certChain:         state.certChain,
-			beginRefreshAt:    state.beginRefreshAt,
-			notAfter:          state.notAfter,
-			overdueForRefresh: state.overdueForRefresh,
-			expired:           state.expired,
+			privateKey:                       state.privateKey,
+			certChain:                        state.certChain,
+			beginRefreshAt:                   state.beginRefreshAt,
+			notAfter:                         state.notAfter,
+			eventEmittedForOverdueForRefresh: state.eventEmittedForOverdueForRefresh,
+			eventEmittedForExpiration:        state.eventEmittedForExpiration,
 
 			refreshPrivateKey:   privKey,
 			refreshPCRName:      pcr.ObjectMeta.Name,
@@ -576,12 +614,12 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 			// remember creating the PCR, then we must be in case 2.  Return to
 			// credStateFresh so we create a new PCR.
 			rec.curState = &credStateFresh{
-				privateKey:        state.privateKey,
-				certChain:         state.certChain,
-				beginRefreshAt:    state.beginRefreshAt,
-				notAfter:          state.notAfter,
-				overdueForRefresh: state.overdueForRefresh,
-				expired:           state.expired,
+				privateKey:                       state.privateKey,
+				certChain:                        state.certChain,
+				beginRefreshAt:                   state.beginRefreshAt,
+				notAfter:                         state.notAfter,
+				eventEmittedForOverdueForRefresh: state.eventEmittedForOverdueForRefresh,
+				eventEmittedForExpiration:        state.eventEmittedForExpiration,
 			}
 			return fmt.Errorf("PodCertificateRequest appears to have been deleted")
 		} else if err != nil {
@@ -598,7 +636,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 					Message: cond.Message,
 				}
 				klog.V(4).InfoS("PodCertificateRequest denied, moving to credStateDenied", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "denied").Inc()
 				m.recorder.Eventf(pod, corev1.EventTypeWarning, certificatesv1beta1.PodCertificateRequestConditionTypeDenied, cond.Reason)
 				return nil
 			case certificatesv1beta1.PodCertificateRequestConditionTypeFailed:
@@ -608,7 +645,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 				}
 				klog.V(4).InfoS("PodCertificateRequest denied, moving to credStateFailed", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
 				m.recorder.Eventf(pod, corev1.EventTypeWarning, certificatesv1beta1.PodCertificateRequestConditionTypeFailed, cond.Reason)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "failed").Inc()
 				return nil
 			case certificatesv1beta1.PodCertificateRequestConditionTypeIssued:
 				rec.curState = &credStateFresh{
@@ -618,7 +654,6 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 					notAfter:       pcr.Status.NotAfter.Time,
 				}
 				klog.V(4).InfoS("PodCertificateRequest issued, moving to credStateFresh", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
-				metrics.PodCertificateStates.WithLabelValues(source.SignerName, "fresh").Inc()
 				return nil
 			}
 		}
@@ -629,21 +664,17 @@ func (m *IssuingManager) handleProjection(ctx context.Context, key projectionKey
 		klog.V(4).InfoS("PodCertificateRequest not in terminal state, remaining in credStateWaitRefresh", "key", key, "pcr", pcr.ObjectMeta.Namespace+"/"+pcr.ObjectMeta.Name)
 
 		// The current time is more than 10 minutes past the most recently issued certificate's `beginRefreshAt` timestamp but the state has not been labeled with overdue for refresh.
-		if m.clock.Now().After(state.beginRefreshAt.Add(refreshOverdueDuration)) && !state.overdueForRefresh {
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "overdue_for_refresh").Inc()
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "fresh").Dec()
+		if m.clock.Now().After(state.beginRefreshAt.Add(refreshOverdueDuration)) && !state.eventEmittedForOverdueForRefresh {
 			klog.V(4).InfoS("Refresh overdue", "key", key)
 			m.recorder.Eventf(pod, corev1.EventTypeWarning, "CertificateOverdueForRefresh", "PodCertificate refresh overdue")
-			state.overdueForRefresh = true
+			state.eventEmittedForOverdueForRefresh = true
 		}
 
 		// The current time is past the most recently issued certificate's `notAfter` timestamp but the state has not been lablled with expired.
-		if m.clock.Now().After(state.notAfter) && !state.expired {
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "overdue_for_refresh").Dec()
-			metrics.PodCertificateStates.WithLabelValues(source.SignerName, "expired").Inc()
+		if m.clock.Now().After(state.notAfter) && !state.eventEmittedForExpiration {
 			klog.V(4).InfoS("Certificates expired", "key", key)
 			m.recorder.Eventf(pod, corev1.EventTypeWarning, "CertificateExpired", "PodCertificate expired")
-			state.expired = true
+			state.eventEmittedForExpiration = true
 		}
 		return nil
 	}
@@ -780,6 +811,59 @@ func (m *IssuingManager) GetPodCertificateCredentialBundle(ctx context.Context, 
 	return rec.curState.getCredBundle()
 }
 
+func (m *IssuingManager) MetricReport() *MetricReport {
+	report := &MetricReport{
+		PodCertificateStates: map[SignerAndState]int{},
+	}
+
+	allPods := m.podManager.GetPods()
+	for _, pod := range allPods {
+		for _, v := range pod.Spec.Volumes {
+			if v.Projected == nil {
+				continue
+			}
+
+			for sourceIndex, source := range v.Projected.Sources {
+				if source.PodCertificate == nil {
+					continue
+				}
+
+				key := projectionKey{
+					Namespace:   pod.ObjectMeta.Namespace,
+					PodName:     pod.ObjectMeta.Name,
+					PodUID:      string(pod.ObjectMeta.UID),
+					VolumeName:  v.Name,
+					SourceIndex: sourceIndex,
+				}
+
+				var rec *projectionRecord
+				func() {
+					m.lock.Lock()
+					defer m.lock.Unlock()
+					rec = m.credStore[key]
+				}()
+				if rec == nil {
+					continue
+				}
+
+				func() {
+					rec.lock.Lock()
+					defer rec.lock.Unlock()
+
+					metricsKey := SignerAndState{
+						SignerName: source.PodCertificate.SignerName,
+						State:      rec.curState.metricsState(m.clock.Now()),
+					}
+					report.PodCertificateStates[metricsKey] = report.PodCertificateStates[metricsKey] + 1
+				}()
+
+			}
+		}
+	}
+
+	return report
+}
+
 func hashBytes(in []byte) []byte {
 	out := sha256.Sum256(in)
 	return out[:]
@@ -898,4 +982,8 @@ func (m *NoOpManager) ForgetPod(ctx context.Context, pod *corev1.Pod) {
 
 func (m *NoOpManager) GetPodCertificateCredentialBundle(ctx context.Context, namespace, podName, podUID, volumeName string, sourceIndex int) ([]byte, []byte, error) {
 	return nil, nil, fmt.Errorf("unimplemented")
+}
+
+func (m *NoOpManager) MetricReport() *MetricReport {
+	return &MetricReport{}
 }

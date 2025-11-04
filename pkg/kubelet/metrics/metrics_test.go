@@ -20,11 +20,7 @@ import (
 	"os"
 	"testing"
 
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	featuregatetesting "k8s.io/component-base/featuregate/testing"
-	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/component-base/metrics/testutil"
-	"k8s.io/kubernetes/pkg/features"
 )
 
 const imagePullDurationKey = "kubelet_" + ImagePullDurationKey
@@ -78,32 +74,4 @@ func TestImagePullDurationMetric(t *testing.T) {
 
 func clearMetrics() {
 	ImagePullDuration.Reset()
-}
-
-func TestPodCertificateStatesMetric(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.PodCertificateRequest, true)
-	if utilfeature.DefaultFeatureGate.Enabled(features.PodCertificateRequest) {
-		legacyregistry.MustRegister(PodCertificateStates)
-	}
-	defer func() {
-		PodCertificateStates.Reset()
-	}()
-
-	PodCertificateStates.WithLabelValues("test.io/foo", "expired").Inc()
-	PodCertificateStates.WithLabelValues("test.io/bar", "overdue_for_refresh").Inc()
-
-	wants, err := os.Open("testdata/pod_certificate_states_metric")
-	defer func() {
-		if err := wants.Close(); err != nil {
-			t.Error(err)
-		}
-	}()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := testutil.GatherAndCompare(GetGather(), wants, "kubelet_podcertificate_states"); err != nil {
-		t.Error(err)
-	}
 }
